@@ -81,6 +81,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+build/
 .output
 
 # Gatsby files
@@ -147,3 +148,11 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Speed Salon
+postgres-data/
+.idea/
+.vscode/
+!/.vscode/extensions.json
+.DS_Store
+Thumbs.db

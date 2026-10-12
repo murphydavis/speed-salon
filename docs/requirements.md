@@ -1,0 +1,105 @@
+# Requirements — Speed Salon
+
+Product rules for the moderator console. Implementation must match this file. Out-of-scope items may be mentioned in the UI as “not built” only if listed here as deferred.
+
+## Problem
+
+Volunteer moderators review speedrun submissions so leaderboards show legitimate times. Speed Salon is the tool they use: browse boards, inspect runs, approve or reject, and ban or reverse bans within the games they cover.
+
+## In scope
+
+### Leaderboards
+
+- A **board** is uniquely **game + category** (example: Super Mario 64 / Any%).
+- Opening a **game** without a category uses that game’s **default category**.
+  - Seed data should typically default to a category named `Any%` where it exists.
+  - Moderators **assigned to the game** may change which category is the default.
+- From the game page, the moderator can **list other categories** for that game and switch boards.
+- Runners may have **any number of approved runs** on a given board.
+- **Default ranking mode: players.** One row per eligible runner, ordered by that runner’s **best** (lowest) approved time on the board.
+- **Alternate ranking mode: runs.** Every eligible approved run is a row. One runner may occupy many consecutive places (including an entire top 10).
+- The ranking mode is a **toggle on the current view**, not a separate product.
+- Moderators can **filter** the current view, **search by runner name**, and **export the current view as CSV** (same filters, same ranking mode, paginated export or full current result set — see decisions if implementation picks a cap).
+- Eligible for ranking: run `status = approved` **and** the runner’s current ban is **inactive**.
+
+### Run details
+
+- Clicking a run shows: runner, game, category, final time, **checkpoint / split times**, current status, current ban/appeal summary if relevant, and **full review history** (who, action, when, payload).
+
+### Moderation of submissions
+
+- New submissions start **`pending`**.
+- Assigned moderators **approve** (run may appear on the board) or **reject** (it does not).
+- **Reject** is invalid unless:
+  1. `reason` is one of the enumerated reject reasons below, and
+  2. `comment` is a non-empty string after trim.
+- Approve still records a review event (comment optional).
+
+#### Reject reasons (enum)
+
+| Code | Meaning |
+|------|---------|
+| `invalid_proof` | Missing, broken, or unusable video/proof |
+| `time_mismatch` | Claimed time does not match the proof |
+| `wrong_category` | Run belongs on a different category (or is miscategorized) |
+| `illegal_play` | Disallowed glitch, exploit, or ruleset violation |
+| `timing_method` | Wrong timing method (e.g. RTA vs IGT) |
+| `duplicate` | Duplicate of an existing submission |
+| `suspicious` | Likely cheating; not enough to ban yet, or pending investigation |
+| `other` | Does not fit the above; comment must explain |
+
+Adding a reason is a product change: update this table, `packages/shared`, and the database check/enum together.
+
+### Bans and appeals
+
+- Moderators assigned to a game may **ban a runner** in the context of site-wide runner standing for this take-home (a banned runner’s times drop off **all** boards). If a later version needs per-game bans, that is a new requirement.
+- Ban **does not delete** runs, review events, or the runner.
+- Bans are **reversible**.
+- Every ban has an **appeal state**:
+
+| State | Meaning |
+|-------|---------|
+| `not_appealed` | Ban is active; runner has not appealed |
+| `pending` | Ban is active; appeal submitted, not decided |
+| `rejected` | Ban is active; appeal was denied |
+| `approved` | **Ban record remains** but is **inactive**; runner’s eligible approved times return to boards |
+
+- Viewing a ban must show this appeal state.
+- **Stub (do not build now):** storing appeal evidence, documents, and correspondence. Schema and API may expose an empty placeholder or omit fields with a README note. See `docs/data-model.md`.
+
+### Authorization (not login)
+
+- Current moderator is identified by header **`X-Moderator-Id`**.
+- Mutations (approve, reject, ban, unban, set default category, decide appeal) require that moderator to be **assigned to the run’s game** (or the game being configured).
+- Unknown or missing header on mutations → **401**. Assigned but wrong game → **403**.
+- Reads may be allowed for any known moderator (browse any board). The UI should still hide actions the header cannot perform.
+- A small **“act as moderator”** control in the web app that sets the header is allowed. It is not an authentication system.
+
+### Seed data
+
+- Enough fake data to feel like a real site: **on the order of a few hundred thousand runs**, multiple games, multiple categories per game, many runners, mixed pending/approved/rejected, at least one banned runner in each appeal state, review history on a sample of runs, and moderators who are **not** assigned to every game.
+
+## Out of scope (defer; note in README)
+
+- Real accounts, passwords, sessions, OAuth
+- Runner-facing submit UI
+- Video hosting or embedded playback (a proof URL field is enough)
+- Full appeal workspace (documents, message threads) — **stub only**
+- Anti-cheat heuristics, automated verification
+- Real-time updates / websockets
+- Per-game vs global ban split (global for v1)
+- Pixel-perfect design, marketing site, public anonymous leaderboard SEO
+
+## Acceptance (minimum vertical slice)
+
+When Compose is eventually wired, a reviewer should be able to:
+
+1. Open a game and see the default category board in **player** ranking.
+2. Toggle to **run** ranking and see a dominant runner occupy multiple places (seed this).
+3. Switch category from the game page.
+4. Search a runner by name and export CSV of the current view.
+5. Open a run and see splits + review history.
+6. As a scoped moderator, approve a pending run and reject another with reason + comment; as a moderator for a different game, those mutations fail.
+7. Ban a runner (times leave boards), see appeal state, approve an appeal (times return, ban row still visible as inactive).
+
+Items not reached in the time box stay in `README.md` as unfinished — do not fake them.
