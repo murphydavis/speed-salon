@@ -96,7 +96,7 @@ INSERT INTO runs (
   id, runner_id, category_id, status, time_ms, submitted_at, proof_url
 )
 SELECT
-  ('00000000-0000-4000-a500-' || lpad((100 + i)::text, 12, '0'))::uuid,
+  ('00000000-0000-4000-a500-' || lpad((1000 + i)::text, 12, '0'))::uuid,
   ('00000000-0000-4000-a300-0000000000' || lpad((12 + i)::text, 2, '0'))::uuid,
   '00000000-0000-4000-a100-000000000001',
   'approved',

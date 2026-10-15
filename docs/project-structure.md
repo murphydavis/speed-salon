@@ -9,7 +9,8 @@ speed-salon/
   docker-compose.yml        # Postgres now; api/web later
   db/
     migrations/             # versioned SQL (001_schema.sql)
-    seed/                   # 001_fixture.sql (init); bulk later
+    seed/                   # 001_fixture.sql
+    scripts/                # reset.sh, seed.sh (Compose tools profile)
     queries/                # intended ranking SQL for the API
   docs/
     requirements.md

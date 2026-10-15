@@ -8,21 +8,22 @@ This repository is a take-home for a senior full-stack role (Node / Express / Ty
 
 ## How to run
 
-Prerequisites: Docker. Copy `.env.example` to `.env` if you want to override defaults.
+Prerequisites: Docker. Defaults match `.env.example` (`speedsalon` / `speedsalon` / `speedsalon` on port 5432).
 
 ```bash
-docker compose up db
+docker compose up -d db
 ```
 
-Wait until healthy, then (optional) inspect:
+Connect a SQL client to `localhost:5432` with those credentials. First start loads schema and fixture. API and web are not wired yet.
+
+Reset to empty schema, then load fixture data:
 
 ```bash
-docker compose exec db psql -U speedsalon -d speedsalon -c "SELECT count(*) FROM runs;"
+docker compose --profile tools run --rm db-reset
+docker compose --profile tools run --rm db-seed
 ```
 
-Init SQL runs only on a **new** volume. To re-seed: `docker compose down -v` then `up` again.
-
-Full `docker compose up` (api + web) is not wired yet.
+Seed expects an empty schema (run reset first if data already exists).
 
 ## Repository layout
 

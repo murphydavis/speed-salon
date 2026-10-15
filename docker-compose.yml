@@ -9,6 +9,7 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db:/db:ro
       - ./db/migrations/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
       - ./db/seed/001_fixture.sql:/docker-entrypoint-initdb.d/002_fixture.sql:ro
     healthcheck:
@@ -16,6 +17,36 @@ services:
       interval: 3s
       timeout: 5s
       retries: 10
+
+  db-reset:
+    profiles: [tools]
+    image: postgres:16-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-speedsalon}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-speedsalon}
+      PGDATABASE: ${POSTGRES_DB:-speedsalon}
+    volumes:
+      - ./db:/db:ro
+    entrypoint: ["/bin/sh", "/db/scripts/reset.sh"]
+
+  db-seed:
+    profiles: [tools]
+    image: postgres:16-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-speedsalon}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-speedsalon}
+      PGDATABASE: ${POSTGRES_DB:-speedsalon}
+    volumes:
+      - ./db:/db:ro
+    entrypoint: ["/bin/sh", "/db/scripts/seed.sh"]
 
 volumes:
   postgres_data:
