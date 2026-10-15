@@ -180,7 +180,11 @@ export function GamePage({
       >
         <label>
           Search runner{" "}
-          <input value={searchDraft} onChange={(e) => setSearchDraft(e.target.value)} />
+          <input
+            value={searchDraft}
+            placeholder="optional"
+            onChange={(e) => setSearchDraft(e.target.value)}
+          />
         </label>
         <button type="submit">Search</button>
         {q ? (
@@ -196,8 +200,10 @@ export function GamePage({
           onClick={() => {
             const qs = new URLSearchParams();
             qs.set("mode", mode);
-            if (categoryId) qs.set("categoryId", categoryId);
-            if (q.trim()) qs.set("q", q.trim());
+            const exportCategory = board.categoryId || categoryId;
+            if (exportCategory) qs.set("categoryId", exportCategory);
+            const exportQ = q.trim();
+            if (exportQ) qs.set("q", exportQ);
             if (includePending) qs.set("includePending", "true");
             if (includeBanned) qs.set("includeBanned", "true");
             if (ignoreMaxRows) qs.set("ignoreMaxRows", "true");
@@ -292,20 +298,26 @@ export function GamePage({
   );
 }
 
-function rankMark(mode: RankingMode, row: { isPb: boolean; playerPlace: number | null }) {
-  const podium = row.playerPlace === 1 || row.playerPlace === 2 || row.playerPlace === 3;
-  if (podium && (mode === "players" || row.isPb)) {
-    const medal = row.playerPlace === 1 ? "🥇" : row.playerPlace === 2 ? "🥈" : "🥉";
-    const label = row.playerPlace === 1 ? "1st" : row.playerPlace === 2 ? "2nd" : "3rd";
-    return (
-      <span className="trophy" title={`Personal best · ${label}`}>
-        {" "}
-        {medal}
-      </span>
-    );
-  }
-  if (mode === "runs" && row.isPb) {
-    return <span className="pb"> PB</span>;
-  }
-  return null;
+function rankMark(mode: RankingMode, row: { isPb: boolean; runPlace: number | null }) {
+  const podium = row.runPlace === 1 || row.runPlace === 2 || row.runPlace === 3;
+  const medal = podium
+    ? row.runPlace === 1
+      ? "🥇"
+      : row.runPlace === 2
+        ? "🥈"
+        : "🥉"
+    : null;
+  const label =
+    row.runPlace === 1 ? "1st" : row.runPlace === 2 ? "2nd" : row.runPlace === 3 ? "3rd" : null;
+  return (
+    <>
+      {medal && label ? (
+        <span className="trophy" title={`Global ${label} fastest run`}>
+          {" "}
+          {medal}
+        </span>
+      ) : null}
+      {mode === "runs" && row.isPb ? <span className="pb"> PB</span> : null}
+    </>
+  );
 }

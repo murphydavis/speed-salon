@@ -111,6 +111,25 @@ export async function listPlayerPlaces(
   return places;
 }
 
+export async function listPodiumRunPlaces(
+  pool: Pool,
+  categoryId: string,
+): Promise<Map<string, number>> {
+  const result = await pool.query<{ id: string }>(
+    `SELECT r.id
+     FROM runs r
+     WHERE r.category_id = $1 AND ${ELIGIBLE}
+     ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC
+     LIMIT 3`,
+    [categoryId],
+  );
+  const places = new Map<string, number>();
+  result.rows.forEach((row, i) => {
+    places.set(row.id, i + 1);
+  });
+  return places;
+}
+
 export type LeaderboardKind = "ranked" | "pending" | "banned";
 
 export type LeaderboardRow = {

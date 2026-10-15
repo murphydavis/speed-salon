@@ -1,5 +1,10 @@
 import type { RankingMode } from "@speed-salon/shared";
-import { listBoardExtras, listLeaderboard, listPlayerPlaces } from "./db/leaderboard.js";
+import {
+  listBoardExtras,
+  listLeaderboard,
+  listPlayerPlaces,
+  listPodiumRunPlaces,
+} from "./db/leaderboard.js";
 import type { Pool } from "./db/pool.js";
 
 export type BoardItem = {
@@ -10,6 +15,7 @@ export type BoardItem = {
   kind: string;
   isPb: boolean;
   playerPlace: number | null;
+  runPlace: number | null;
   runner: { id: string; name: string };
 };
 
@@ -25,9 +31,10 @@ export async function assembleBoard(
     includeBanned: boolean;
   },
 ): Promise<{ items: BoardItem[]; total: number }> {
-  const [{ items, total }, playerPlaces] = await Promise.all([
+  const [{ items, total }, playerPlaces, runPlaces] = await Promise.all([
     listLeaderboard(pool, opts.categoryId, opts.mode, opts.q, opts.page, opts.limit),
     listPlayerPlaces(pool, opts.categoryId, opts.q),
+    listPodiumRunPlaces(pool, opts.categoryId),
   ]);
   const extras =
     opts.includePending || opts.includeBanned
@@ -50,6 +57,7 @@ export async function assembleBoard(
     kind: row.kind,
     isPb: row.isPb,
     playerPlace: playerPlaces.get(row.runnerId) ?? null,
+    runPlace: runPlaces.get(row.id) ?? null,
     runner: { id: row.runnerId, name: row.runnerName },
   }));
   const rankedIds = new Set(ranked.map((row) => row.runId));
@@ -63,6 +71,7 @@ export async function assembleBoard(
       kind: row.kind,
       isPb: row.isPb,
       playerPlace: null,
+      runPlace: null,
       runner: { id: row.runnerId, name: row.runnerName },
     }));
   const merged = [...ranked, ...extraRows].sort((a, b) => {
@@ -84,6 +93,7 @@ export function toCsv(items: BoardItem[]): string {
     "kind",
     "is_pb",
     "player_place",
+    "run_place",
     "run_id",
   ];
   const lines = [header.join(",")];
@@ -101,6 +111,7 @@ export function toCsv(items: BoardItem[]): string {
         row.kind,
         row.isPb ? "true" : "false",
         row.playerPlace ?? "",
+        row.runPlace ?? "",
         row.runId,
       ].join(","),
     );

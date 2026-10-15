@@ -176,7 +176,8 @@ async function loadBoard(pool: Pool, req: Request, limit: number | null, page: n
     req.params.gameId,
     typeof req.query.categoryId === "string" ? req.query.categoryId : undefined,
   );
-  const q = typeof req.query.q === "string" ? req.query.q : undefined;
+  const qRaw = typeof req.query.q === "string" ? req.query.q : undefined;
+  const q = qRaw?.trim() ? qRaw.trim() : undefined;
   const includePending = parseFlag(req.query.includePending);
   const includeBanned = parseFlag(req.query.includeBanned);
   if (includePending || includeBanned) {

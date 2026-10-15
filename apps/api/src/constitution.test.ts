@@ -79,6 +79,8 @@ describe("leaderboard", () => {
     const names = body.items.map((row: { runner: { name: string } }) => row.runner.name);
     assert.equal(names.filter((n: string) => n === "DashMain").length, 1);
     assert.equal(body.items[0].runner.name, "DashMain");
+    assert.equal(body.items[0].runPlace, 1);
+    assert.ok(body.items.slice(1).every((row: { runPlace: number | null }) => row.runPlace == null));
     assert.ok(!names.includes("PendingPatty"));
     assert.ok(!names.includes("RejectRay"));
     assert.ok(!names.includes("BannedNoAppeal"));
@@ -122,6 +124,10 @@ describe("leaderboard", () => {
     assert.equal(body.items[0].runId, DASH_PB);
     assert.equal(dash[0].isPb, true);
     assert.equal(dash[0].playerPlace, 1);
+    assert.equal(dash[0].runPlace, 1);
+    assert.equal(dash[1].runPlace, 2);
+    assert.equal(dash[2].runPlace, 3);
+    assert.ok(dash.slice(3).every((row: { runPlace: number | null }) => row.runPlace == null));
     assert.ok(dash.slice(1).every((row: { isPb: boolean }) => row.isPb === false));
     const won = body.items.find(
       (row: { runner: { name: string }; isPb: boolean }) =>
@@ -133,6 +139,7 @@ describe("leaderboard", () => {
         row.runner.name === "SecondPlace" && row.isPb,
     );
     assert.equal(second.playerPlace, 3);
+    assert.equal(second.runPlace, null);
   });
 
   test("search q=DashMain returns that runner", async () => {
@@ -143,13 +150,21 @@ describe("leaderboard", () => {
 });
 
 describe("csv and default category", () => {
-  test("csv matches DashMain and omits pending", async () => {
+  test("csv with no search exports the full board", async () => {
     const res = await fetch(`${base}/games/${SM64}/leaderboard.csv?mode=players`);
     assert.equal(res.status, 200);
     const text = await res.text();
     assert.match(text, /^place,runner,time_ms/);
     assert.match(text, /DashMain/);
+    assert.match(text, /SecondPlace/);
     assert.doesNotMatch(text, /PendingPatty/);
+  });
+
+  test("csv empty q is the full board", async () => {
+    const res = await fetch(`${base}/games/${SM64}/leaderboard.csv?mode=players&q=`);
+    assert.equal(res.status, 200);
+    const text = await res.text();
+    assert.match(text, /SecondPlace/);
   });
 
   test("csv ignoreMaxRows=true is accepted", async () => {

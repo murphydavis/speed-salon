@@ -72,6 +72,7 @@ paths:
           in: query
           schema:
             type: string
+          description: Optional runner-name search. Omit or leave empty for the full board.
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/limit"
         - name: includePending
@@ -84,7 +85,7 @@ paths:
             type: boolean
       responses:
         "200":
-          description: Ranked eligible runs with submittedAt and isPb; extras mixed by time when flags are set
+          description: Ranked eligible runs with submittedAt, isPb, playerPlace, and runPlace (1-3 = global fastest eligible runs)
         "401":
           $ref: "#/components/responses/Error"
         "403":
@@ -107,6 +108,7 @@ paths:
           in: query
           schema:
             type: string
+          description: Optional. Empty or omitted exports the entire board.
         - name: includePending
           in: query
           schema:

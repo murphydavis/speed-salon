@@ -124,4 +124,8 @@ Export uses the same category, mode, search, and include flags as the HTML table
 
 `GET /games/{gameId}/leaderboard.csv?ignoreMaxRows=true` skips the 10 000-row cap and asks Postgres for the full matching set. The API still builds the CSV in memory and returns it in one response, so this is a **best-effort attempt**: it can time out or exhaust memory on a bulk board. Default (flag omitted or false) stays capped. A durable job (“prepare export” → file in object storage) is wishlist, not this take-home.
 
+## 2026-10-15 — Medals follow the three fastest eligible runs
+
+Supersedes treating gold/silver/bronze as player-ladder marks on PBs. The podium is the global run ranking for the category: the three lowest eligible times. `runPlace` is 1–3 for those runs and null otherwise. Player place stays available for PB context; it does not choose the emoji.
+
 ## Open (resolve when implementing)

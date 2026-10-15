@@ -22,7 +22,8 @@ Walking slice (in the test file):
 - [x] Assigned mod can mix pending/banned; places stay eligible-only
 
 - [x] Search q=DashMain returns that runner
-- [x] CSV matches current leaderboard query (DashMain present, pending absent)
+- [x] CSV with no `q` exports the full board (DashMain and SecondPlace)
+- [x] Global podium: runPlace 1–3 are DashMain’s three fastest runs; SecondPlace PB is not bronze
 - [x] CSV `ignoreMaxRows=true` is accepted and still returns CSV
 - [x] Set default category (assigned only)
 - [x] Ban removes runner from the board; lift restores

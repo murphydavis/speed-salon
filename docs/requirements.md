@@ -16,11 +16,11 @@ Volunteer moderators review speedrun submissions so leaderboards show legitimate
 - From the game page, the moderator can **list other categories** for that game and switch boards.
 - Runners may have **any number of approved runs** on a given board.
 - **Default ranking mode: players.** One row per eligible runner, ordered by that runner’s **best** (lowest) approved time on the board.
-- **Alternate ranking mode: runs.** Every eligible approved run is a row. One runner may occupy many consecutive places (including an entire top 10). That runner’s best eligible run is marked **PB**. Gold / silver / bronze go to the 1st / 2nd / 3rd **player** PBs (same order as rank-by-players), on that PB row only — not on a dominant runner’s other places.
-- In **players** ranking, places 1–3 also show those medals (every row is already a PB).
+- **Alternate ranking mode: runs.** Every eligible approved run is a row. One runner may occupy many consecutive places (including an entire top 10). That runner’s best eligible run is marked **PB**.
+- Gold / silver / bronze mark the **globally** 1st / 2nd / 3rd fastest eligible **runs** on the category (same order as rank-by-runs: time, then submitted_at, then id). They are not player-ladder medals. A 2nd-place *player* does not get silver unless that PB is also the 2nd-fastest run. Pending and banned extras never get medals. Search does not re-rank the podium.
 - The ranking mode is a **toggle on the current view**, not a separate product.
 - Each board row shows **submitted_at** (treated as completed-at until a separate completed timestamp exists). The **time** is the link to the run; the runner name is not a profile link.
-- Moderators can **filter** the current view, **search by runner name**, and **export the current view as CSV** (same filters, same ranking mode). Default export is the full matching set **capped at 10 000 rows**. An optional flag **attempts** an uncapped export (same query, no row cap); that request may still fail on memory or timeout. Job-based export and object storage are wishlist.
+- Moderators can **filter** the current view, **search by runner name**, and **export the current view as CSV** (same ranking mode and include flags). Search is optional: **no search term exports the entire board** (still capped at 10 000 unless `ignoreMaxRows`). A non-empty search limits the export to matching runners. An optional flag **attempts** an uncapped export; that request may still fail on memory or timeout. Job-based export and object storage are wishlist.
 - Eligible for ranking: run `status = approved` **and** the runner’s current ban is **inactive**.
 - Assigned moderators of the game may toggle **pending** and **banned** runs onto the current board (same category, mixed in by time). Those rows have **no place**. Place numbers stay the eligible ranking only. Unassigned or anonymous clients cannot include them.
 
