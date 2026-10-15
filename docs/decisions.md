@@ -168,4 +168,8 @@ Malformed JSON, unknown routes, illegal query values, and Postgres `22P02` (bad 
 
 Node’s test runner cannot drive the React console. `@playwright/test` is a **devDependency of `apps/web` only** so one script can click the walking slice (games → board → rank toggle → category → runner search → run detail → pending extras) and optionally record WebM. Headless Chromium has no OS pointer, so the recorder draws an overlay cursor, scrolls the data grid into view, and writes step captions both on-screen and as [`docs/assets/smoke.vtt`](assets/smoke.vtt). It is not a product dependency, not bundled in the Compose runtime (browser download skipped in the Docker `npm ci`), and not a CI gate. Stdlib `fetch` already covers the API constitution suite.
 
+## 2026-10-15 — Wishlist order is ease × moderator value
+
+Unscheduled work in [`roadmap.md`](roadmap.md) is sorted for the next maintainer: sortable columns, rejected-on-board, then a pending dashboard, before jobs/S3, a runner app, or an ORM. Process (CI) sits after those product slices. Out-of-scope items stay last.
+
 ## Open (resolve when implementing)

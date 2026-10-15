@@ -91,26 +91,32 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 
 ## Later / unscheduled
 
-Not a phase until promoted here with a checkbox. **Wishlist** items are not assignment work unless they are moved up.
+Not a phase until promoted here with a checkbox. **Wishlist** items are not assignment work unless they are moved up. Ranked 2026-10-15 by **ease** (low effort first) × **value** to moderators or to running the repo, not by how impressive they look.
 
-- **Near / easy:** Click-to-sort columns on the games list (name, counts) and on the board (place, runner, time, submitted). Short-term win; not built yet.
-- **Near / process:** CI/CD so `main` stays protected. Prefer discrete feature branches. Tag branch names and commits with ticket ids when a tracker is in use; cite the same ids in ADRs when the decision is architectural. Gate every pull request to `main` on code review, the constitution test suite passing, and coverage reported (local `npm test` already prints Node’s coverage table; a pipeline would fail the PR if tests or a coverage floor failed).
-- **Near:** Moderator notifications (in-app). Queue for review events that matter to assigned games (new pending runs, bans, appeals). Later feeds can include anomaly alerts from stats below.
-- **Medium:** Moderator discussion board — general-purpose talk among mods, not appeal correspondence (that stays the appeal stub).
-- **Medium:** Show **rejected** runs on a board (with reject reason, comment, and review history) for training, comparison to pending, and later review or reversal of past decisions. Not built; hiding approved / showing pending and banned is the current work queue.
-- **Medium:** Secret store (AWS Secrets Manager, Infisical, HashiCorp Vault, or similar) for database credentials and other runtime secrets instead of Compose `.env` / plaintext env. Not this take-home.
-- **Long / low:** Visualizations and stats on runs (time distributions, progression over submitted_at). Could illustrate getting faster over time, or flag incongruous jumps in a runner’s times as suspicious — those flags would notify moderators, not auto-reject. Not anti-cheat product in this take-home.
-- **Long:** Split-host deploy: Postgres, API, and web on separate machines or VMs with a small set of environment values (`DATABASE_URL`, public API origin, ports, proxy target). Local Compose stays one-host. CORS or a reverse proxy would replace the Vite same-origin proxy.
-- Player profile pages: list any runs by that runner (all games/categories, not only the current board).
-- Moderator home dashboard: links to assigned games and a pending queue across those games. The games list already marks assignments; this would be a dedicated landing page.
-- Assignment matrix: who is assigned to which games, filterable by moderator or by game.
-- Super-moderator / admin: set and unset moderator↔game assignments. Every change appends an immutable review event (same rule as all moderator actions). New `review_action` values (e.g. `assign_game` / `unassign_game`) when this is scheduled — not in the take-home enum.
-- Moderator profile: that person’s game assignments and action history (approve/reject, ban, appeal decide). Distinct from the home dashboard.
-- Durable API logs (ship JSONL off the box). Hosting (AWS vs elsewhere) is undecided; do not pick CloudWatch/ELK in this take-home. Local `logs/api.log` is enough for now; see [`decisions.md`](decisions.md).
-- Prisma or similar ORM (typed CRUD, generated client). Current persistence is `pg` + explicit SQL; see [`decisions.md`](decisions.md). Do not introduce an ORM during this take-home.
-- Appeal documents and correspondence (stubbed in [`data-model.md`](data-model.md))
-- Async board export: UI **Prepare export** enqueues a job that writes a file (CSV or similar). Long-term store is object storage (S3-class), not a synchronous HTTP body. Same class of store as run artifacts below. Synchronous `ignoreMaxRows` is only a demo attempt.
-- Object storage for run artifacts: VODs, documentation, and other supporting files. `proof_url` is enough for this take-home; hosting and playback stay out of scope.
-- Paired public/runner web app on the **same database**: registered runners submit via web or email; the general public browses boards. This console stays the moderator surface. Not a login system in this take-home.
-- Fielding hypermedia beyond pagination `next`
-- Anything listed as out of scope in [`requirements.md`](requirements.md)
+### Next (high value, cheap)
+
+1. **Click-to-sort columns** on the games list (name, counts) and the board (place, runner, time, submitted). Ease: low. Value: everyday scanning. Client sort of the current page is a trap at this scale — sort must be query params + SQL `ORDER BY`.
+2. **Rejected runs on a board** (reason, comment, review history), same include-flag pattern as pending/banned. Ease: low–medium (ACL + ranking mix already exist). Value: training and revisiting decisions. Hiding approved / showing pending and banned is the current work queue.
+3. **Moderator home dashboard:** assigned games and a pending queue across those games. Ease: low–medium. Value: this is how mods start a session; the games list only marks `*`.
+
+### Soon (high value, more glue)
+
+4. **Player profile:** all of that runner’s runs (every game/category), for ban context. Ease: medium. Value: high when inspecting standing.
+5. **CI/CD, protected `main`:** feature branches; ticket ids on branches/commits/ADRs when a tracker exists; PRs gated on review + constitution tests + coverage (local `npm test` already prints the table). Ease: medium. Value: process, not the demo.
+6. **In-app notifications** for assigned games (new pending, bans, appeals). Poll the existing review events first; websockets stay out of scope. Ease: medium. Value: high once volume is real.
+7. **Assignment matrix** (who covers which game), then **super-moderator assign/unassign** with new `review_action` values. Ease: medium / medium–high. Value: ops. Read-only matrix can ship before mutations.
+
+### Later (real cost, or not this product)
+
+8. **Async “Prepare export”** → file in object storage. Ease: high (jobs + store). Value: high at bulk CSV scale; `ignoreMaxRows` is only a demo attempt.
+9. **Secret store** (Secrets Manager / Infisical / Vault) instead of Compose `.env`. Ease: medium–high. Value: production secrets, not the take-home.
+10. **Split-host deploy** (db / api / web, env for `DATABASE_URL` and public origin). Ease: medium–high. Value: ops; local Compose stays one-host.
+11. **Durable API logs** (ship JSONL). Ease: medium. Value: ops. Hosting target undecided; local `logs/api.log` is enough — see [`decisions.md`](decisions.md).
+12. **Run stats / charts** (time distributions, progression). May flag incongruous jumps for mods — not auto-reject, not anti-cheat product. Ease: high. Value: medium.
+13. **Appeal documents and correspondence** (stubbed in [`data-model.md`](data-model.md)) and **object storage for VODs / supporting files**. Ease: high. Value: medium until a runner app exists. `proof_url` is enough now.
+14. **Moderator discussion board** (not appeal threads). Ease: high. Value: low until the review queue is excellent.
+15. **Moderator profile** (assignments + action history). Ease: medium. Value: overlaps the dashboard; do after (3) and (7).
+16. **Prisma / ORM.** Ease: high (ranking SQL must stay explicit). Value: low for this take-home — see [`decisions.md`](decisions.md).
+17. **Paired public/runner app** on the same database (submit + public boards). Ease: very high. Value: high for a *site*, out of identity for *this* console. Not a login system in the take-home.
+18. **Hypermedia** beyond pagination `next`. Ease: low. Value: none for v1.
+19. Anything listed as out of scope in [`requirements.md`](requirements.md) (real auth, embedded video, websockets, per-game vs global ban split, marketing site).
