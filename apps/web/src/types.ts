@@ -85,6 +85,12 @@ export type RunDetail = {
     moderatorId: string;
     moderatorName: string;
   }[];
+  ban: {
+    id: string;
+    appealState: string;
+    comment: string;
+    createdAt: string;
+  } | null;
   activeBan: {
     id: string;
     appealState: string;

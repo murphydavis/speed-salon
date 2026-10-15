@@ -18,6 +18,10 @@ const PENDING_SM64 = "00000000-0000-4000-a500-000000000301";
 const REJECTED_SM64 = "00000000-0000-4000-a500-000000000302";
 const CELESTE_PENDING = "00000000-0000-4000-a500-000000000502";
 const DASH_PB = "00000000-0000-4000-a500-000000000001";
+const DASH_RUNNER = "00000000-0000-4000-a300-000000000001";
+const ANY = "00000000-0000-4000-a100-000000000001";
+const HUNDO = "00000000-0000-4000-a100-000000000002";
+const PENDING_APPEAL_BAN = "00000000-0000-4000-a600-000000000002";
 
 let pool: Pool;
 let server: Server;
@@ -129,6 +133,123 @@ describe("leaderboard", () => {
         row.runner.name === "SecondPlace" && row.isPb,
     );
     assert.equal(second.playerPlace, 3);
+  });
+
+  test("search q=DashMain returns that runner", async () => {
+    const body = await json(`/games/${SM64}/leaderboard?q=DashMain`);
+    assert.ok(body.items.length >= 1);
+    assert.ok(body.items.every((row: { runner: { name: string } }) => row.runner.name.includes("DashMain")));
+  });
+});
+
+describe("csv and default category", () => {
+  test("csv matches DashMain and omits pending", async () => {
+    const res = await fetch(`${base}/games/${SM64}/leaderboard.csv?mode=players`);
+    assert.equal(res.status, 200);
+    const text = await res.text();
+    assert.match(text, /^place,runner,time_ms/);
+    assert.match(text, /DashMain/);
+    assert.doesNotMatch(text, /PendingPatty/);
+  });
+
+  test("csv ignoreMaxRows=true is accepted", async () => {
+    const res = await fetch(
+      `${base}/games/${SM64}/leaderboard.csv?mode=players&ignoreMaxRows=true`,
+    );
+    assert.equal(res.status, 200);
+    const text = await res.text();
+    assert.match(text, /^place,runner,time_ms/);
+    assert.match(text, /DashMain/);
+  });
+
+  test("Bob cannot set SM64 default", async () => {
+    const res = await fetch(`${base}/games/${SM64}/default-category`, {
+      method: "POST",
+      headers: { [MODERATOR_HEADER]: BOB, "content-type": "application/json" },
+      body: JSON.stringify({ categoryId: HUNDO }),
+    });
+    assert.equal(res.status, 403);
+  });
+
+  test("Alice can set SM64 default category", async () => {
+    try {
+      const res = await fetch(`${base}/games/${SM64}/default-category`, {
+        method: "POST",
+        headers: { [MODERATOR_HEADER]: ALICE, "content-type": "application/json" },
+        body: JSON.stringify({ categoryId: HUNDO }),
+      });
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.defaultCategoryId, HUNDO);
+    } finally {
+      await pool.query(`UPDATE games SET default_category_id = $1 WHERE id = $2`, [ANY, SM64]);
+      await pool.query(
+        `DELETE FROM review_events WHERE action = 'set_default_category' AND category_id = $1`,
+        [HUNDO],
+      );
+    }
+  });
+});
+
+describe("bans", () => {
+  test("Bob cannot ban on SM64", async () => {
+    const res = await fetch(`${base}/games/${SM64}/bans`, {
+      method: "POST",
+      headers: { [MODERATOR_HEADER]: BOB, "content-type": "application/json" },
+      body: JSON.stringify({ runnerId: DASH_RUNNER, comment: "nope" }),
+    });
+    assert.equal(res.status, 403);
+  });
+
+  test("ban removes DashMain; lift restores", async () => {
+    try {
+      const banRes = await fetch(`${base}/games/${SM64}/bans`, {
+        method: "POST",
+        headers: { [MODERATOR_HEADER]: ALICE, "content-type": "application/json" },
+        body: JSON.stringify({ runnerId: DASH_RUNNER, comment: "investigation" }),
+      });
+      assert.equal(banRes.status, 201);
+      const banned = await json(`/games/${SM64}/leaderboard`);
+      const names = banned.items.map((row: { runner: { name: string } }) => row.runner.name);
+      assert.ok(!names.includes("DashMain"));
+      const ban = await banRes.json();
+      const lift = await fetch(`${base}/games/${SM64}/bans/${ban.id}/lift`, {
+        method: "POST",
+        headers: { [MODERATOR_HEADER]: ALICE, "content-type": "application/json" },
+        body: "{}",
+      });
+      assert.equal(lift.status, 200);
+      const restored = await json(`/games/${SM64}/leaderboard`);
+      assert.equal(restored.items[0].runner.name, "DashMain");
+    } finally {
+      await pool.query(
+        `DELETE FROM review_events WHERE runner_id = $1 AND action IN ('ban', 'unban')`,
+        [DASH_RUNNER],
+      );
+      await pool.query(`DELETE FROM bans WHERE runner_id = $1`, [DASH_RUNNER]);
+    }
+  });
+
+  test("approved appeal returns BannedPendingAppeal to the board", async () => {
+    try {
+      const res = await fetch(`${base}/games/${SM64}/bans/${PENDING_APPEAL_BAN}/appeal-decision`, {
+        method: "POST",
+        headers: { [MODERATOR_HEADER]: ALICE, "content-type": "application/json" },
+        body: JSON.stringify({ decision: "approved" }),
+      });
+      assert.equal(res.status, 200);
+      const body = await json(`/games/${SM64}/leaderboard`);
+      const names = body.items.map((row: { runner: { name: string } }) => row.runner.name);
+      assert.ok(names.includes("BannedPendingAppeal"));
+    } finally {
+      await pool.query(`UPDATE bans SET appeal_state = 'pending' WHERE id = $1`, [
+        PENDING_APPEAL_BAN,
+      ]);
+      await pool.query(
+        `DELETE FROM review_events WHERE action = 'appeal_approve' AND runner_id = $1`,
+        ["00000000-0000-4000-a300-000000000007"],
+      );
+    }
   });
 });
 

@@ -20,7 +20,7 @@ Volunteer moderators review speedrun submissions so leaderboards show legitimate
 - In **players** ranking, places 1–3 also show those medals (every row is already a PB).
 - The ranking mode is a **toggle on the current view**, not a separate product.
 - Each board row shows **submitted_at** (treated as completed-at until a separate completed timestamp exists). The **time** is the link to the run; the runner name is not a profile link.
-- Moderators can **filter** the current view, **search by runner name**, and **export the current view as CSV** (same filters, same ranking mode, paginated export or full current result set — see decisions if implementation picks a cap).
+- Moderators can **filter** the current view, **search by runner name**, and **export the current view as CSV** (same filters, same ranking mode). Default export is the full matching set **capped at 10 000 rows**. An optional flag **attempts** an uncapped export (same query, no row cap); that request may still fail on memory or timeout. Job-based export and object storage are wishlist.
 - Eligible for ranking: run `status = approved` **and** the runner’s current ban is **inactive**.
 - Assigned moderators of the game may toggle **pending** and **banned** runs onto the current board (same category, mixed in by time). Those rows have **no place**. Place numbers stay the eligible ranking only. Unassigned or anonymous clients cannot include them.
 
@@ -86,8 +86,8 @@ Adding a reason is a product change: update this table, `packages/shared`, and t
 ## Out of scope (defer; note in README)
 
 - Real accounts, passwords, sessions, OAuth
-- Runner-facing submit UI
-- Video hosting or embedded playback (a proof URL field is enough)
+- Runner-facing submit UI (wishlist: paired public/runner app; web or email submit)
+- Video hosting or embedded playback (a proof URL field is enough; wishlist: object storage for VODs and supporting files)
 - Full appeal workspace (documents, message threads) — **stub only**
 - Anti-cheat heuristics, automated verification
 - Real-time updates / websockets

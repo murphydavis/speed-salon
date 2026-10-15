@@ -18,10 +18,12 @@ export async function listLeaderboard(
   mode: RankingMode,
   q: string | undefined,
   page: number,
-  limit: number,
+  limit: number | null,
 ): Promise<{ items: LeaderboardRow[]; total: number }> {
   const search = q?.trim() ? q.trim() : null;
-  const offset = (page - 1) * limit;
+  const offset = limit === null ? 0 : (page - 1) * limit;
+  const pageSql = limit === null ? "" : " OFFSET $3 LIMIT $4";
+  const pageParams = limit === null ? [] : [offset, limit];
 
   if (mode === "players") {
     const count = await pool.query<{ n: string }>(
@@ -45,9 +47,8 @@ export async function listLeaderboard(
          WHERE r.category_id = $1 AND ${ELIGIBLE} AND ${RUNNER_FILTER}
          ORDER BY r.runner_id, r.time_ms ASC, r.submitted_at ASC, r.id ASC
        ) best
-       ORDER BY best."timeMs" ASC, best."submittedAt" ASC, best.id ASC
-       OFFSET $3 LIMIT $4`,
-      [categoryId, search, offset, limit],
+       ORDER BY best."timeMs" ASC, best."submittedAt" ASC, best.id ASC${pageSql}`,
+      [categoryId, search, ...pageParams],
     );
     return { items: result.rows, total: Number(count.rows[0]?.n ?? 0) };
   }
@@ -73,9 +74,8 @@ export async function listLeaderboard(
        JOIN runners rn ON rn.id = r.runner_id
        WHERE r.category_id = $1 AND ${ELIGIBLE} AND ${RUNNER_FILTER}
      ) ranked
-     ORDER BY ranked."timeMs" ASC, ranked."submittedAt" ASC, ranked.id ASC
-     OFFSET $3 LIMIT $4`,
-    [categoryId, search, offset, limit],
+     ORDER BY ranked."timeMs" ASC, ranked."submittedAt" ASC, ranked.id ASC${pageSql}`,
+    [categoryId, search, ...pageParams],
   );
   return { items: result.rows, total: Number(count.rows[0]?.n ?? 0) };
 }
@@ -138,10 +138,12 @@ export async function listBoardExtras(
   q: string | undefined,
   includePending: boolean,
   includeBanned: boolean,
-  limit: number,
+  limit: number | null,
 ): Promise<LeaderboardRow[]> {
   const search = q?.trim() ? q.trim() : null;
   const extras: LeaderboardRow[] = [];
+  const limitSql = limit === null ? "" : " LIMIT $3";
+  const limitParams = limit === null ? [] : [limit];
   if (includePending) {
     const pending = await pool.query<LeaderboardRow>(
       `SELECT
@@ -152,9 +154,8 @@ export async function listBoardExtras(
        FROM runs r
        JOIN runners rn ON rn.id = r.runner_id
        WHERE r.category_id = $1 AND r.status = 'pending' AND ${RUNNER_FILTER}
-       ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC
-       LIMIT $3`,
-      [categoryId, search, limit],
+       ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC${limitSql}`,
+      [categoryId, search, ...limitParams],
     );
     extras.push(...pending.rows);
   }
@@ -173,9 +174,8 @@ export async function listBoardExtras(
              AND ${RUNNER_FILTER}
            ORDER BY r.runner_id, r.time_ms ASC, r.submitted_at ASC, r.id ASC
          ) best
-         ORDER BY best."timeMs" ASC, best."submittedAt" ASC, best.id ASC
-         LIMIT $3`,
-        [categoryId, search, limit],
+         ORDER BY best."timeMs" ASC, best."submittedAt" ASC, best.id ASC${limitSql}`,
+        [categoryId, search, ...limitParams],
       );
       extras.push(...banned.rows);
     } else {
@@ -189,9 +189,8 @@ export async function listBoardExtras(
          JOIN runners rn ON rn.id = r.runner_id
          WHERE r.category_id = $1 AND r.status = 'approved' AND ${ACTIVE_BAN}
            AND ${RUNNER_FILTER}
-         ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC
-         LIMIT $3`,
-        [categoryId, search, limit],
+         ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC${limitSql}`,
+        [categoryId, search, ...limitParams],
       );
       extras.push(...banned.rows);
     }

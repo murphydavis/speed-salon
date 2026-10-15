@@ -1,6 +1,6 @@
 import { RANKING_MODES, type RankingMode } from "@speed-salon/shared";
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../api.js";
+import { api, apiDownload, ApiRequestError } from "../api.js";
 import { formatSubmitted, formatTime } from "../format.js";
 import { navigate } from "../nav.js";
 import type { GameDetail, LeaderboardPage } from "../types.js";
@@ -21,28 +21,35 @@ export function GamePage({
   const categoryId = params.get("categoryId") ?? undefined;
   const includePending = assigned && params.get("includePending") === "1";
   const includeBanned = assigned && params.get("includeBanned") === "1";
+  const q = params.get("q") ?? "";
 
   const [game, setGame] = useState<GameDetail | null>(null);
   const [board, setBoard] = useState<LeaderboardPage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchDraft, setSearchDraft] = useState(q);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [ignoreMaxRows, setIgnoreMaxRows] = useState(false);
 
   function setQuery(next: {
     mode?: RankingMode;
     categoryId?: string;
     includePending?: boolean;
     includeBanned?: boolean;
+    q?: string;
   }) {
-    const q = new URLSearchParams();
+    const qs = new URLSearchParams();
     const nextMode = next.mode ?? mode;
     const nextCat = next.categoryId ?? categoryId;
     const nextPending = next.includePending ?? includePending;
     const nextBanned = next.includeBanned ?? includeBanned;
-    if (nextMode !== "players") q.set("mode", nextMode);
-    if (nextCat) q.set("categoryId", nextCat);
-    if (assigned && nextPending) q.set("includePending", "1");
-    if (assigned && nextBanned) q.set("includeBanned", "1");
-    const qs = q.toString();
-    navigate(`/games/${gameId}${qs ? `?${qs}` : ""}`);
+    const nextQ = next.q ?? q;
+    if (nextMode !== "players") qs.set("mode", nextMode);
+    if (nextCat) qs.set("categoryId", nextCat);
+    if (nextQ.trim()) qs.set("q", nextQ.trim());
+    if (assigned && nextPending) qs.set("includePending", "1");
+    if (assigned && nextBanned) qs.set("includeBanned", "1");
+    const encoded = qs.toString();
+    navigate(`/games/${gameId}${encoded ? `?${encoded}` : ""}`);
   }
 
   useEffect(() => {
@@ -51,6 +58,7 @@ export function GamePage({
     const qs = new URLSearchParams();
     qs.set("mode", mode);
     if (categoryId) qs.set("categoryId", categoryId);
+    if (q.trim()) qs.set("q", q.trim());
     if (includePending) qs.set("includePending", "true");
     if (includeBanned) qs.set("includeBanned", "true");
     Promise.all([
@@ -70,7 +78,7 @@ export function GamePage({
     return () => {
       cancelled = true;
     };
-  }, [gameId, mode, categoryId, includePending, includeBanned, moderatorId]);
+  }, [gameId, mode, categoryId, includePending, includeBanned, moderatorId, q]);
 
   if (error) return <p className="error">{error}</p>;
   if (!game || !board) return <p className="muted">Loading…</p>;
@@ -130,6 +138,94 @@ export function GamePage({
           </button>
         ))}
       </div>
+
+      {assigned ? (
+        <form
+          className="row-btns"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setActionError(null);
+            const categoryId = (e.currentTarget.elements.namedItem("defaultCat") as HTMLSelectElement)
+              .value;
+            api<GameDetail>(`/games/${gameId}/default-category`, {
+              method: "POST",
+              moderatorId,
+              body: JSON.stringify({ categoryId }),
+            })
+              .then(setGame)
+              .catch((err: Error) => setActionError(err.message));
+          }}
+        >
+          <label>
+            Default board{" "}
+            <select name="defaultCat" defaultValue={game.defaultCategoryId ?? game.categories[0]?.id}>
+              {game.categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit">Set default</button>
+        </form>
+      ) : null}
+      {actionError ? <p className="error">{actionError}</p> : null}
+
+      <form
+        className="row-btns"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setQuery({ q: searchDraft });
+        }}
+      >
+        <label>
+          Search runner{" "}
+          <input value={searchDraft} onChange={(e) => setSearchDraft(e.target.value)} />
+        </label>
+        <button type="submit">Search</button>
+        {q ? (
+          <button type="button" onClick={() => { setSearchDraft(""); setQuery({ q: "" }); }}>
+            Clear
+          </button>
+        ) : null}
+      </form>
+
+      <div className="row-btns">
+        <button
+          type="button"
+          onClick={() => {
+            const qs = new URLSearchParams();
+            qs.set("mode", mode);
+            if (categoryId) qs.set("categoryId", categoryId);
+            if (q.trim()) qs.set("q", q.trim());
+            if (includePending) qs.set("includePending", "true");
+            if (includeBanned) qs.set("includeBanned", "true");
+            if (ignoreMaxRows) qs.set("ignoreMaxRows", "true");
+            apiDownload(
+              `/games/${gameId}/leaderboard.csv?${qs.toString()}`,
+              `${game.slug}-leaderboard.csv`,
+              { moderatorId: includePending || includeBanned ? moderatorId : undefined },
+            ).catch((err: unknown) =>
+              setActionError(err instanceof ApiRequestError ? err.message : String(err)),
+            );
+          }}
+        >
+          Export CSV
+        </button>
+        <label>
+          <input
+            type="checkbox"
+            checked={ignoreMaxRows}
+            onChange={(e) => setIgnoreMaxRows(e.target.checked)}
+          />{" "}
+          Attempt uncapped export
+        </label>
+      </div>
+      {ignoreMaxRows ? (
+        <p className="muted">
+          Uncapped export skips the 10 000-row cap. It may still time out or fail on a large board.
+        </p>
+      ) : null}
 
       {assigned ? (
         <div className="row-btns">

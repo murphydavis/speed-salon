@@ -30,7 +30,7 @@ Logical model for v1. Table names may be pluralized in SQL; meanings must not ch
 - `id`, `runner_id`, `category_id` (game is `categories.game_id`)
 - `status`: `pending` | `approved` | `rejected`
 - `time_ms` (integer milliseconds; rank by this ascending)
-- `submitted_at`, `proof_url` (optional text)
+- `submitted_at`, `proof_url` (optional text). Bytes behind that URL (VODs, docs, supporting files) are wishlist object storage, not columns here.
 - Checkpoints: either `run_splits` child table (`run_id`, `ordinal`, `label`, `time_ms`) or a constrained JSON array. Prefer a **child table** so detail queries stay ordinary SQL.
 - Never delete a run because of reject or ban.
 

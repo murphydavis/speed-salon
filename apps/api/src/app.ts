@@ -5,13 +5,14 @@ import {
   type RunStatus,
 } from "@speed-salon/shared";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
+import { assembleBoard, toCsv } from "./board.js";
+import { decideAppeal, getBan, issueBan, liftBan } from "./db/bans.js";
 import { findModerator, isAssigned, listModerators } from "./db/moderators.js";
-import { getGame, listGames, resolveBoardCategoryId } from "./db/games.js";
-import { listBoardExtras, listLeaderboard, listPlayerPlaces } from "./db/leaderboard.js";
+import { getGame, listGames, resolveBoardCategoryId, setDefaultCategory } from "./db/games.js";
 import type { Pool } from "./db/pool.js";
 import { approveRun, getRun, listGameRuns, rejectRun, runGameId } from "./db/runs.js";
 import { ApiError } from "./errors.js";
-import { parseFlag, parseLimit, parsePage } from "./http.js";
+import { CSV_MAX_ROWS, parseFlag, parseLimit, parsePage } from "./http.js";
 import { requireModerator } from "./middleware/moderator.js";
 import { requestLog } from "./middleware/request-log.js";
 import { mountOpenApiDocs } from "./openapi-docs.js";
@@ -61,81 +62,76 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
     });
   }));
 
+  app.get("/games/:gameId/leaderboard.csv", asyncHandler(async (req, res) => {
+    const ignoreMaxRows = parseFlag(req.query.ignoreMaxRows);
+    const board = await loadBoard(pool, req, ignoreMaxRows ? null : CSV_MAX_ROWS, 1);
+    res.setHeader("content-type", "text/csv; charset=utf-8");
+    res.setHeader(
+      "content-disposition",
+      `attachment; filename="${req.params.gameId}-leaderboard.csv"`,
+    );
+    res.send(toCsv(board.items));
+  }));
+
   app.get("/games/:gameId/leaderboard", asyncHandler(async (req, res) => {
     const page = parsePage(req.query.page);
     const limit = parseLimit(req.query.limit);
-    const mode = parseMode(req.query.mode);
-    const categoryId = await resolveBoardCategoryId(
-      pool,
-      req.params.gameId,
-      typeof req.query.categoryId === "string" ? req.query.categoryId : undefined,
-    );
-    const q = typeof req.query.q === "string" ? req.query.q : undefined;
-    const includePending = parseFlag(req.query.includePending);
-    const includeBanned = parseFlag(req.query.includeBanned);
-    if (includePending || includeBanned) {
-      await requireAssignedToGame(pool, req, req.params.gameId);
-    }
-    const [{ items, total }, playerPlaces] = await Promise.all([
-      listLeaderboard(pool, categoryId, mode, q, page, limit),
-      listPlayerPlaces(pool, categoryId, q),
-    ]);
-    const extras =
-      includePending || includeBanned
-        ? await listBoardExtras(
-            pool,
-            categoryId,
-            mode,
-            q,
-            includePending,
-            includeBanned,
-            limit,
-          )
-        : [];
-    const offset = (page - 1) * limit;
-    const ranked = items.map((row, i) => ({
-      place: offset + i + 1,
-      runId: row.id,
-      timeMs: row.timeMs,
-      submittedAt: row.submittedAt,
-      kind: row.kind,
-      isPb: row.isPb,
-      playerPlace: playerPlaces.get(row.runnerId) ?? null,
-      runner: { id: row.runnerId, name: row.runnerName },
-    }));
-    const rankedIds = new Set(ranked.map((row) => row.runId));
-    const extraRows = extras
-      .filter((row) => !rankedIds.has(row.id))
-      .map((row) => ({
-        place: null as number | null,
-        runId: row.id,
-        timeMs: row.timeMs,
-        submittedAt: row.submittedAt,
-        kind: row.kind,
-        isPb: row.isPb,
-        playerPlace: null,
-        runner: { id: row.runnerId, name: row.runnerName },
-      }));
-    const merged = [...ranked, ...extraRows].sort((a, b) => {
-      if (a.timeMs !== b.timeMs) return a.timeMs - b.timeMs;
-      const at = new Date(a.submittedAt).getTime();
-      const bt = new Date(b.submittedAt).getTime();
-      if (at !== bt) return at - bt;
-      return a.runId.localeCompare(b.runId);
-    });
+    const board = await loadBoard(pool, req, limit, page);
     res.json({
       gameId: req.params.gameId,
-      categoryId,
-      mode,
+      categoryId: board.categoryId,
+      mode: board.mode,
       page,
       limit,
-      total,
-      includePending,
-      includeBanned,
-      items: merged,
-      next: nextLink(req.path, page, limit, total, req.query),
+      total: board.total,
+      includePending: board.includePending,
+      includeBanned: board.includeBanned,
+      items: board.items,
+      next: nextLink(req.path, page, limit, board.total, req.query),
     });
   }));
+
+  app.post("/games/:gameId/default-category", requireModerator(pool), asyncHandler(async (req, res) => {
+    const categoryId = typeof req.body?.categoryId === "string" ? req.body.categoryId : "";
+    if (!categoryId) throw new ApiError(400, "invalid_default", "categoryId is required");
+    await mutateAssigned(pool, req, req.params.gameId, async (client, moderatorId) => {
+      await setDefaultCategory(client, req.params.gameId, categoryId, moderatorId);
+    });
+    res.json(await getGame(pool, req.params.gameId));
+  }));
+
+  app.post("/games/:gameId/bans", requireModerator(pool), asyncHandler(async (req, res) => {
+    const runnerId = typeof req.body?.runnerId === "string" ? req.body.runnerId : "";
+    const comment = typeof req.body?.comment === "string" ? req.body.comment : "";
+    if (!runnerId) throw new ApiError(400, "invalid_ban", "runnerId is required");
+    const ban = await mutateAssigned(pool, req, req.params.gameId, async (client, moderatorId) => {
+      return issueBan(client, runnerId, moderatorId, comment);
+    });
+    res.status(201).json(ban);
+  }));
+
+  app.post("/games/:gameId/bans/:banId/lift", requireModerator(pool), asyncHandler(async (req, res) => {
+    const ban = await mutateAssigned(pool, req, req.params.gameId, async (client, moderatorId) => {
+      const current = await getBan(client, req.params.banId);
+      return liftBan(client, current.id, moderatorId);
+    });
+    res.json(ban);
+  }));
+
+  app.post(
+    "/games/:gameId/bans/:banId/appeal-decision",
+    requireModerator(pool),
+    asyncHandler(async (req, res) => {
+      const decision = req.body?.decision;
+      if (decision !== "approved" && decision !== "rejected") {
+        throw new ApiError(400, "invalid_appeal", "decision must be approved or rejected");
+      }
+      const ban = await mutateAssigned(pool, req, req.params.gameId, async (client, moderatorId) => {
+        return decideAppeal(client, req.params.banId, moderatorId, decision);
+      });
+      res.json(ban);
+    }),
+  );
 
   app.get("/runs/:runId", asyncHandler(async (req, res) => {
     res.json(await getRun(pool, req.params.runId));
@@ -171,6 +167,55 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
   });
 
   return app;
+}
+
+async function loadBoard(pool: Pool, req: Request, limit: number | null, page: number) {
+  const mode = parseMode(req.query.mode);
+  const categoryId = await resolveBoardCategoryId(
+    pool,
+    req.params.gameId,
+    typeof req.query.categoryId === "string" ? req.query.categoryId : undefined,
+  );
+  const q = typeof req.query.q === "string" ? req.query.q : undefined;
+  const includePending = parseFlag(req.query.includePending);
+  const includeBanned = parseFlag(req.query.includeBanned);
+  if (includePending || includeBanned) {
+    await requireAssignedToGame(pool, req, req.params.gameId);
+  }
+  const assembled = await assembleBoard(pool, {
+    categoryId,
+    mode,
+    q,
+    page,
+    limit,
+    includePending,
+    includeBanned,
+  });
+  return { ...assembled, categoryId, mode, includePending, includeBanned };
+}
+
+async function mutateAssigned<T>(
+  pool: Pool,
+  req: Request,
+  gameId: string,
+  fn: (client: import("pg").PoolClient, moderatorId: string) => Promise<T>,
+): Promise<T> {
+  const moderatorId = req.moderator!.id;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    if (!(await isAssigned(client, moderatorId, gameId))) {
+      throw new ApiError(403, "forbidden", "moderator is not assigned to this game");
+    }
+    const result = await fn(client, moderatorId);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function requireAssignedToGame(pool: Pool, req: Request, gameId: string): Promise<void> {

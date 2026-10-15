@@ -50,20 +50,21 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 - REST v1 is resource HTTP (verbs, statuses), not a hypermedia graph.
 - Persistence is **`pg` + SQL** (ranking and seed stay explicit). Prisma is wishlist, not this take-home.
 - API request log is local JSONL (`logs/api.log`). Durable shipping is wishlist.
+- CSV export is capped at 10 000 rows unless `ignoreMaxRows` is set (best-effort; may fail). Job-based export and object storage are wishlist.
 
 ## Unfinished / not started
 
 Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftovers:
 
 - Phase 1 leftover: **bulk seed** (hundreds of thousands of runs)
-- Phase 2 leftover: ban/appeal mutations, CSV, set default category, remaining constitution tests
-- Phase 3 leftover: search/filter, CSV, ban/appeal UI, Compose `web`/`api` services
+- Phase 3 leftover: Compose `api`/`web` services
+- Search on the board is runner-name only (no extra filter chips beyond pending/banned toggles)
 - Appeal evidence storage (intentionally deferred; see data model stub)
-- Wishlist (not this assignment): player profiles; moderator dashboard of assigned games + pending queue — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
+- Wishlist (not this assignment): player profiles; moderator dashboard; async export jobs + S3-class storage; run VODs/supporting files; paired public/runner app (web or email submit) — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
 
 ## What we would do next
 
-Next: remaining API (ban/CSV/default) and leftover UI, or Compose api/web — see [`docs/roadmap.md`](docs/roadmap.md).
+Next: bulk seed and Compose `api`/`web` — see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Maintaining this project
 

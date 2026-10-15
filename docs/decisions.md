@@ -116,6 +116,12 @@ Durable shipping (CloudWatch, OpenSearch, a log vendor) waits on hosting choices
 
 Runs have no separate completed timestamp. The board shows `submitted_at` in that role. A real completed-at would be a schema change later.
 
-## Open (resolve when implementing)
+## 2026-10-15 — CSV is the full matching board, capped at 10 000 rows
 
-- CSV: full matching set vs same page vs hard row cap.
+Export uses the same category, mode, search, and include flags as the HTML table, not only the current page. Ranked rows are included first (eligible order), then extras if requested, truncated at 10 000. Enough for the fixture and a fair demo; bulk-scale export would need a job.
+
+## 2026-10-15 — Optional `ignoreMaxRows` attempts an uncapped CSV
+
+`GET /games/{gameId}/leaderboard.csv?ignoreMaxRows=true` skips the 10 000-row cap and asks Postgres for the full matching set. The API still builds the CSV in memory and returns it in one response, so this is a **best-effort attempt**: it can time out or exhaust memory on a bulk board. Default (flag omitted or false) stays capped. A durable job (“prepare export” → file in object storage) is wishlist, not this take-home.
+
+## Open (resolve when implementing)

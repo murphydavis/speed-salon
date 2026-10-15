@@ -33,7 +33,7 @@ There is no session. The header *is* the identity. Seeded moderator UUIDs are in
 
 ## CSV
 
-CSV is generated **on the API** from the same query parameters as the HTML table (game, category, ranking mode, search, filters). The browser should not re-implement ranking in JS for export.
+CSV is generated **on the API** from the same query parameters as the HTML table (game, category, ranking mode, search, filters). The browser should not re-implement ranking in JS for export. Default response is capped at 10 000 rows. `ignoreMaxRows=true` attempts the full set in one response. Async jobs and object-store files are wishlist.
 
 ## Seed
 

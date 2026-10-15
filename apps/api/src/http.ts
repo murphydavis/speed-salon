@@ -3,6 +3,7 @@ import { ApiError } from "./errors.js";
 export const DEFAULT_PAGE = 1;
 export const DEFAULT_LIMIT = 50;
 export const MAX_LIMIT = 100;
+export const CSV_MAX_ROWS = 10_000;
 
 export function parsePage(raw: unknown): number {
   if (raw === undefined) return DEFAULT_PAGE;

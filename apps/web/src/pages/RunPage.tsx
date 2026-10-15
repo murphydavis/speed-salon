@@ -19,6 +19,7 @@ export function RunPage({
   const [actionError, setActionError] = useState<string | null>(null);
   const [reason, setReason] = useState<(typeof REJECT_REASONS)[number]>("invalid_proof");
   const [comment, setComment] = useState("");
+  const [banComment, setBanComment] = useState("");
 
   useEffect(() => {
     api<RunDetail>(`/runs/${runId}`)
@@ -90,10 +91,11 @@ export function RunPage({
         </dd>
       </dl>
 
-      {run.activeBan ? (
-        <p className="warn">
-          Active ban · appeal {run.activeBan.appealState}
-          {run.activeBan.comment ? ` — ${run.activeBan.comment}` : ""}
+      {run.ban ? (
+        <p className={run.activeBan ? "warn" : "muted"}>
+          Ban · appeal {run.ban.appealState}
+          {run.ban.comment ? ` — ${run.ban.comment}` : ""}
+          {run.activeBan ? "" : " (inactive)"}
         </p>
       ) : null}
 
@@ -139,10 +141,119 @@ export function RunPage({
         <p className="muted">This moderator is not assigned to {run.gameName}.</p>
       ) : null}
 
+      {assigned ? (
+        <>
+          <h2>Standing</h2>
+          {actionError ? <p className="error">{actionError}</p> : null}
+          {!run.activeBan ? (
+            <form
+              className="stack"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void (async () => {
+                  setActionError(null);
+                  try {
+                    await api(`/games/${run.gameId}/bans`, {
+                      method: "POST",
+                      moderatorId,
+                      body: JSON.stringify({ runnerId: run.runnerId, comment: banComment }),
+                    });
+                    setRun(await api<RunDetail>(`/runs/${runId}`));
+                    setBanComment("");
+                  } catch (err) {
+                    setActionError(err instanceof ApiRequestError ? err.message : String(err));
+                  }
+                })();
+              }}
+            >
+              <label>
+                Ban comment
+                <textarea value={banComment} onChange={(e) => setBanComment(e.target.value)} required />
+              </label>
+              <button type="submit">Ban runner</button>
+            </form>
+          ) : (
+            <p>
+              <button
+                type="button"
+                onClick={() => {
+                  void (async () => {
+                    setActionError(null);
+                    try {
+                      await api(`/games/${run.gameId}/bans/${run.activeBan!.id}/lift`, {
+                        method: "POST",
+                        moderatorId,
+                        body: "{}",
+                      });
+                      setRun(await api<RunDetail>(`/runs/${runId}`));
+                    } catch (err) {
+                      setActionError(err instanceof ApiRequestError ? err.message : String(err));
+                    }
+                  })();
+                }}
+              >
+                Lift ban
+              </button>
+              {run.activeBan.appealState === "pending" ? (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void (async () => {
+                        setActionError(null);
+                        try {
+                          await api(
+                            `/games/${run.gameId}/bans/${run.activeBan!.id}/appeal-decision`,
+                            {
+                              method: "POST",
+                              moderatorId,
+                              body: JSON.stringify({ decision: "approved" }),
+                            },
+                          );
+                          setRun(await api<RunDetail>(`/runs/${runId}`));
+                        } catch (err) {
+                          setActionError(err instanceof ApiRequestError ? err.message : String(err));
+                        }
+                      })();
+                    }}
+                  >
+                    Approve appeal
+                  </button>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void (async () => {
+                        setActionError(null);
+                        try {
+                          await api(
+                            `/games/${run.gameId}/bans/${run.activeBan!.id}/appeal-decision`,
+                            {
+                              method: "POST",
+                              moderatorId,
+                              body: JSON.stringify({ decision: "rejected" }),
+                            },
+                          );
+                          setRun(await api<RunDetail>(`/runs/${runId}`));
+                        } catch (err) {
+                          setActionError(err instanceof ApiRequestError ? err.message : String(err));
+                        }
+                      })();
+                    }}
+                  >
+                    Reject appeal
+                  </button>
+                </>
+              ) : null}
+            </p>
+          )}
+        </>
+      ) : null}
+
       {canMutate ? (
         <>
           <h2>Moderate</h2>
-          {actionError ? <p className="error">{actionError}</p> : null}
           <p>
             <button className="primary" type="button" onClick={() => void approve()}>
               Approve

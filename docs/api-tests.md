@@ -21,8 +21,9 @@ Walking slice (in the test file):
 - [x] includePending without header → 401; wrong-game mod → 403
 - [x] Assigned mod can mix pending/banned; places stay eligible-only
 
-Not yet:
-
-- [ ] Ban removes runner from all boards; appeal-approved ban does not
-- [ ] Set default category (assigned only)
-- [ ] CSV matches current leaderboard query
+- [x] Search q=DashMain returns that runner
+- [x] CSV matches current leaderboard query (DashMain present, pending absent)
+- [x] CSV `ignoreMaxRows=true` is accepted and still returns CSV
+- [x] Set default category (assigned only)
+- [x] Ban removes runner from the board; lift restores
+- [x] Approved appeal returns the runner to the board

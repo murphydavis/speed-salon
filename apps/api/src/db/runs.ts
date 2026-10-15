@@ -78,22 +78,25 @@ export async function getRun(pool: Pool, runId: string): Promise<RunDetail> {
      FROM review_events e
      JOIN moderators m ON m.id = e.moderator_id
      WHERE e.run_id = $1
+        OR (e.runner_id = $2 AND e.run_id IS NULL)
      ORDER BY e.created_at ASC, e.id ASC`,
-    [runId],
+    [runId, header.runnerId],
   );
   const ban = await pool.query<ActiveBanRow>(
     `SELECT id, appeal_state AS "appealState", comment, created_at AS "createdAt"
      FROM bans
-     WHERE runner_id = $1 AND appeal_state <> 'approved'
-     ORDER BY created_at DESC
+     WHERE runner_id = $1
+     ORDER BY created_at DESC, id DESC
      LIMIT 1`,
     [header.runnerId],
   );
+  const latest = ban.rows[0] ?? null;
   return {
     ...header,
     splits: splits.rows,
     reviewEvents: events.rows,
-    activeBan: ban.rows[0] ?? null,
+    ban: latest,
+    activeBan: latest && latest.appealState !== "approved" ? latest : null,
   };
 }
 
@@ -207,5 +210,6 @@ export type RunHeader = {
 export type RunDetail = RunHeader & {
   splits: SplitRow[];
   reviewEvents: ReviewEventRow[];
+  ban: ActiveBanRow | null;
   activeBan: ActiveBanRow | null;
 };

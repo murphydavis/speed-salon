@@ -1,5 +1,5 @@
-import type { Pool } from "./pool.js";
 import { notFound } from "../errors.js";
+import type { Pool, PoolClient } from "./pool.js";
 
 export async function listGames(
   pool: Pool,
@@ -54,6 +54,30 @@ export async function resolveBoardCategoryId(
   }
   if (!game.resolvedDefaultCategoryId) throw notFound("category");
   return game.resolvedDefaultCategoryId;
+}
+
+export async function setDefaultCategory(
+  client: PoolClient,
+  gameId: string,
+  categoryId: string,
+  moderatorId: string,
+): Promise<void> {
+  const game = await client.query(`SELECT id FROM games WHERE id = $1 FOR UPDATE`, [gameId]);
+  if (!game.rows[0]) throw notFound("game");
+  const cat = await client.query(
+    `SELECT id FROM categories WHERE id = $1 AND game_id = $2`,
+    [categoryId, gameId],
+  );
+  if (!cat.rows[0]) throw notFound("category");
+  await client.query(`UPDATE games SET default_category_id = $1 WHERE id = $2`, [
+    categoryId,
+    gameId,
+  ]);
+  await client.query(
+    `INSERT INTO review_events (category_id, moderator_id, action, payload)
+     VALUES ($1, $2, 'set_default_category', $3::jsonb)`,
+    [categoryId, moderatorId, JSON.stringify({ categoryId })],
+  );
 }
 
 export type GameRow = {

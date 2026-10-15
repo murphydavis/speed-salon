@@ -66,11 +66,11 @@ Compose Postgres belongs here so the schema has a place to live. Full `docker co
 
 ### 2.3 Implementation with the tests
 
-- [ ] Implement so current tests pass; widen with the walking slice
+- [x] Implement so current tests pass; widen with the walking slice (2026-10-15)
   - [x] Modular factoring: data-model types / thin persistence module reflecting Postgres — not inlined across route handlers, and **not** a generic ORM that hides ranking SQL (2026-10-15)
   - [x] Moderator identity and game assignment enforced on mutations (2026-10-15)
   - [x] Ranking queries use explicit SQL (or a thin query layer) and pagination (2026-10-15)
-  - [ ] Ban/appeal mutations, CSV, set default category
+  - [x] Ban/appeal mutations, CSV, set default category (2026-10-15)
 
 ---
 
@@ -80,7 +80,7 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 
 - [x] Walking-slice UI: game default board, ranking toggle, run detail, approve/reject, act-as header (2026-10-15)
 - [x] Category switch on the game page (2026-10-15; API already had `categoryId`)
-- [ ] Remaining requirements: search/filter, CSV, ban/appeal visibility and actions
+- [x] Remaining requirements: search, CSV, set default, ban/appeal visibility and actions (2026-10-15)
 - [ ] Compose includes `web` so `docker compose up` is the full local demo
 
 ---
@@ -94,5 +94,8 @@ Not a phase until promoted here with a checkbox. **Wishlist** items are not assi
 - Durable API logs (ship JSONL off the box). Hosting (AWS vs elsewhere) is undecided; do not pick CloudWatch/ELK in this take-home. Local `logs/api.log` is enough for now; see [`decisions.md`](decisions.md).
 - Prisma or similar ORM (typed CRUD, generated client). Current persistence is `pg` + explicit SQL; see [`decisions.md`](decisions.md). Do not introduce an ORM during this take-home.
 - Appeal documents and correspondence (stubbed in [`data-model.md`](data-model.md))
+- Async board export: UI **Prepare export** enqueues a job that writes a file (CSV or similar). Long-term store is object storage (S3-class), not a synchronous HTTP body. Same class of store as run artifacts below. Synchronous `ignoreMaxRows` is only a demo attempt.
+- Object storage for run artifacts: VODs, documentation, and other supporting files. `proof_url` is enough for this take-home; hosting and playback stay out of scope.
+- Paired public/runner web app on the **same database**: registered runners submit via web or email; the general public browses boards. This console stays the moderator surface. Not a login system in this take-home.
 - Fielding hypermedia beyond pagination `next`
 - Anything listed as out of scope in [`requirements.md`](requirements.md)
