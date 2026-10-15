@@ -2,7 +2,7 @@
 
 Stable IDs from `db/seed/001_fixture.sql`. Use these as `X-Moderator-Id` and in tests.
 
-Init SQL only runs on an **empty** volume. Reset with `docker compose down -v` then `docker compose up db`.
+Init SQL only runs on an **empty** volume (schema + fixture + bulk by default). `docker compose up` does not wipe an existing database. To re-init: `docker compose down -v` then `docker compose up`, or `db-reset` plus seed tools. Fixture-only first start: `SEED_MODE=fixture docker compose up`.
 
 ## Moderators (act as)
 
@@ -45,7 +45,7 @@ Full UUIDs share the prefix `00000000-0000-4000-`.
 
 ## Optional bulk seed
 
-Not loaded on Compose init. `docker compose --profile tools run --rm db-seed-bulk` (`db/seed/002_bulk.sql`). Prefix `00000000-0000-4000-b`. Main load is bulk boards; a pad may add slow runs on short fixture categories so every category has ≥50 non-rejected runs. After bulk, every table has ≥20 rows (24 games, 24 bulk mods, mixed appeal bans, multi-mod games). Re-load: reset, fixture, bulk.
+Loaded on first empty Compose volume (`db/seed/002_bulk.sql`). Prefix `00000000-0000-4000-b`. Main load is bulk boards; a pad may add slow runs on short fixture categories so every category has ≥50 non-rejected runs. After bulk, every table has ≥20 rows (24 games, 24 bulk mods, mixed appeal bans, multi-mod games). Skip on first init: `SEED_MODE=fixture`. After `db-reset`: `db-seed-demo` (fixture+bulk) or `db-seed` then `db-seed-bulk`.
 
 | Meaning | Id |
 |---------|-----|

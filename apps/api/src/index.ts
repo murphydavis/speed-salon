@@ -10,6 +10,6 @@ const pool = createPool(url);
 const logFile = process.env.LOG_FILE ?? "logs/api.log";
 const app = createApp(pool, { logFile });
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`api listening on ${port} — docs http://localhost:${port}/docs`);
 });

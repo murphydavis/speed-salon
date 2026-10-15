@@ -6,13 +6,14 @@ Single repository. Display name **Speed Salon**; directory `speed-salon`.
 speed-salon/
   AGENTS.md                 # how humans and agents must work
   README.md                 # run, decisions summary, unfinished, next
-  docker-compose.yml        # Postgres; api/web services later
+  docker-compose.yml        # db, api, web; tools profile for reset/seed
+  Dockerfile                # Node 22 workspace image for api and web
   package.json              # npm workspaces
   scripts/dev.mjs           # runs API + Vite together
   db/
     migrations/             # versioned SQL (001_schema.sql)
     seed/                   # 001_fixture.sql, 002_bulk.sql (optional, not init)
-    scripts/                # reset.sh, seed.sh, bulk.sh (Compose tools profile)
+    scripts/                # init.sh (empty volume), reset/seed/bulk/demo (tools profile)
     queries/                # intended ranking SQL for the API
   docs/
     requirements.md
@@ -44,7 +45,7 @@ speed-salon/
 
 ## First implementation files
 
-- `docker-compose.yml` — `db` now; `api`, `web` later
+- `docker-compose.yml` — `db`, `api`, `web`; tools profile for reset/seed
 - `db/migrations/001_schema.sql` — Postgres schema
 - `db/seed/001_fixture.sql` — deterministic fixture
 - `docs/fixture.md` — stable IDs for tests and act-as

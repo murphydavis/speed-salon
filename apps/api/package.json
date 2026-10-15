@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "test": "tsx --test src/constitution.test.ts"
+    "start": "tsx src/index.ts",
+    "test": "node --import tsx --test --experimental-test-coverage --test-coverage-include=src/**/*.ts src/constitution.test.ts"
   },
   "dependencies": {
     "@speed-salon/shared": "*",

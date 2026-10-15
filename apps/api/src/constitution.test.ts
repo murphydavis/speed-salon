@@ -56,14 +56,14 @@ describe("openapi explorer", () => {
 
 describe("lists for the console", () => {
   test("moderators include Alice assignments", async () => {
-    const body = await json("/moderators");
+    const body = await json("/moderators?limit=100");
     const alice = body.items.find((m: { displayName: string }) => m.displayName === "Alice Koopa");
     assert.ok(alice);
     assert.ok(alice.assignedGameIds.includes(SM64));
   });
 
   test("games list includes SM64 counts and name search", async () => {
-    const body = await json("/games");
+    const body = await json("/games?limit=100");
     const sm64 = body.items.find((g: { name: string }) => g.name === "Super Mario 64");
     assert.ok(sm64);
     const summed = await pool.query<{

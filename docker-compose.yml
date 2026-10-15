@@ -5,18 +5,46 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-speedsalon}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-speedsalon}
       POSTGRES_DB: ${POSTGRES_DB:-speedsalon}
+      SEED_MODE: ${SEED_MODE:-bulk}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db:/db:ro
-      - ./db/migrations/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
-      - ./db/seed/001_fixture.sql:/docker-entrypoint-initdb.d/002_fixture.sql:ro
+      - ./db/scripts/init.sh:/docker-entrypoint-initdb.d/001_init.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-speedsalon} -d ${POSTGRES_DB:-speedsalon}"]
-      interval: 3s
-      timeout: 5s
-      retries: 10
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\" && (test -f /var/lib/postgresql/data/.speedsalon_seed_complete || (test ! -f /var/lib/postgresql/data/.speedsalon_seed_started && psql -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\" -tAc \"SELECT 1 FROM games LIMIT 1\" | grep -q 1))",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 600s
+
+  api:
+    build: .
+    command: ["npm", "run", "start", "-w", "@speed-salon/api"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-speedsalon}:${POSTGRES_PASSWORD:-speedsalon}@db:5432/${POSTGRES_DB:-speedsalon}
+      PORT: "3000"
+      LOG_FILE: /tmp/api.log
+    ports:
+      - "${API_PORT:-3000}:3000"
+
+  web:
+    build: .
+    command: ["npm", "run", "dev", "-w", "@speed-salon/web", "--", "--host", "0.0.0.0", "--port", "5173"]
+    depends_on:
+      - api
+    environment:
+      API_PROXY_TARGET: http://api:3000
+    ports:
+      - "${WEB_PORT:-5173}:5173"
 
   db-reset:
     profiles: [tools]
@@ -62,6 +90,21 @@ services:
     volumes:
       - ./db:/db:ro
     entrypoint: ["/bin/sh", "/db/scripts/bulk.sh"]
+
+  db-seed-demo:
+    profiles: [tools]
+    image: postgres:16-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-speedsalon}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-speedsalon}
+      PGDATABASE: ${POSTGRES_DB:-speedsalon}
+    volumes:
+      - ./db:/db:ro
+    entrypoint: ["/bin/sh", "/db/scripts/demo.sh"]
 
 volumes:
   postgres_data:

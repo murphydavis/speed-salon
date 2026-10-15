@@ -55,6 +55,8 @@ Do not implement behavior that violates these. If a requested feature conflicts,
 
 The take-home asks for a **readable history**. Do not squash the project into one commit.
 
+Prefer **discrete feature branches** into a **protected `main`**. When a ticket exists, put its id on the **branch name** and in the **commit subject** (for example `ABC-123-hide-approved` / `ABC-123 let mods hide approved runs`). Same id in a new `docs/decisions.md` entry when that change is architectural. CI/CD to enforce this is wishlist; see `docs/roadmap.md`.
+
 Commit in small, named slices, for example: docs, schema, seed, list API, run detail, moderate, ban/appeal, ranking toggle, CSV, compose wiring.
 
 Commit messages say **why**. Do not commit `.env`, credentials, or generated `node_modules` / `dist`.

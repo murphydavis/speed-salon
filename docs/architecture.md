@@ -39,10 +39,10 @@ CSV is generated **on the API** from the same query parameters as the HTML table
 
 Two loads, both using bulk SQL (`COPY` or batched inserts), never hundreds of thousands of ORM `save()` calls:
 
-- **Fixture** — `db/seed/001_fixture.sql`, applied on first Compose init. IDs: [`docs/fixture.md`](fixture.md)
-- **Bulk** — `db/seed/002_bulk.sql` via `docker compose --profile tools run --rm db-seed-bulk`. Own games plus a pad so every category has ≥50 non-rejected runs. ≥20 rows in every table; one board exceeds 10 000 eligible runs for `ignoreMaxRows`. See `docs/decisions.md`.
+- **Fixture** — `db/seed/001_fixture.sql`. IDs: [`docs/fixture.md`](fixture.md)
+- **Bulk** — `db/seed/002_bulk.sql`. Own games plus a pad so every category has ≥50 non-rejected runs. ≥20 rows in every table; one board exceeds 10 000 eligible runs for `ignoreMaxRows`. See `docs/decisions.md`.
 
-Compose service `db` is Postgres 16. Init files run only on an empty volume.
+Compose `db` is Postgres 16. **Empty volume only:** `db/scripts/init.sh` loads schema, fixture, then bulk (`SEED_MODE=fixture` stops after fixture). An existing data directory is not re-initialized. `api` and `web` are Node 22 from the root `Dockerfile`. The browser talks to Vite; Vite proxies API paths to the `api` service.
 
 ## HTTP (v1)
 

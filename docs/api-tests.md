@@ -1,6 +1,6 @@
 # Constitution tests
 
-Executable cases live in `apps/api`. This list is the backlog; implement one at a time.
+Executable cases live in `apps/api`. They use fixture IDs and must pass on fixture-only or fixture+bulk (no seed-mode flag). `npm test` prints line/branch/function coverage for `apps/api/src`. This list is the backlog; implement one at a time.
 
 Walking slice (in the test file):
 

@@ -60,7 +60,7 @@ v1 uses resource identifiers, standard verbs, JSON representations, and meaningf
 
 **Bulk (demo scale):** same shape, scaled to **a few hundred thousand runs**. Status mix roughly **~90% approved / ~7% pending / ~3% rejected** (order-of-magnitude, not a SLA). Runner activity is **skewed** (a few runners have many runs; most have few), not uniform. Games are few relative to runs, but **at least 20 distinct games**. Load with `COPY` or batched inserts. **At least one board (game + category) has more than 10 000 eligible approved runs** so the default CSV cap and `ignoreMaxRows` can be exercised.
 
-After bulk is applied, **every table has at least 20 rows**: games, categories, runners, moderators, moderator_games, runs, run_splits, bans, review_events. **≥20 moderators**, **≥20 bans** spanning every appeal state, multi-moderator games and multi-game moderators, mixed category counts (including unset defaults), and sampled splits plus review events (approve, reject reasons, ban/appeal, set_default_category). **Every category has at least 50 non-rejected runs** (a 32 approved / 14 pending / 6 banned mix is enough), so a board with pending and banned shown is at least that long. Bulk uses its own UUID prefix `...-b...`. The main load stays on bulk boards; a pad step may add slow filler runs on short fixture categories so walking-slice ranking is unchanged. Optional Compose command, not first-volume init — tests stay on fixture only. Re-applying after a bulk change: reset, fixture, then bulk.
+After bulk is applied, **every table has at least 20 rows**: games, categories, runners, moderators, moderator_games, runs, run_splits, bans, review_events. **≥20 moderators**, **≥20 bans** spanning every appeal state, multi-moderator games and multi-game moderators, mixed category counts (including unset defaults), and sampled splits plus review events (approve, reject reasons, ban/appeal, set_default_category). **Every category has at least 50 non-rejected runs** (a 32 approved / 14 pending / 6 banned mix is enough), so a board with pending and banned shown is at least that long. Bulk uses its own UUID prefix `...-b...`. The main load stays on bulk boards; a pad step may add slow filler runs on short fixture categories so walking-slice ranking is unchanged. First empty Compose volume runs fixture then bulk (`SEED_MODE=fixture` skips bulk). An existing volume is never wiped by `docker compose up`. Tests assert fixture IDs and pass with extra bulk rows. Re-seed: `db-reset` then `db-seed-demo`, or `docker compose down -v` then `up`.
 
 ## 2026-10-14 — Schema in `db/`; Compose init on empty volume
 
@@ -100,7 +100,7 @@ If the CDN is blocked, the YAML in `docs/` still works in any OpenAPI viewer.
 
 ## 2026-10-15 — Web is Vite + React; no React Router; Vite proxies the API
 
-CRA is unmaintained. Vite is the usual React + TypeScript toolchain and is enough for a crude console. Pages are `/`, `/games/{id}`, `/runs/{id}` with `history.pushState` — a router package would only wrap that. In development Vite proxies `/games`, `/runs`, and `/moderators` to the API so the browser stays same-origin (no `cors` package). HTML navigations are not proxied (SPA fallback). Compose `web` is still later.
+CRA is unmaintained. Vite is the usual React + TypeScript toolchain and is enough for a crude console. Pages are `/`, `/games/{id}`, `/runs/{id}` with `history.pushState` — a router package would only wrap that. Vite proxies `/games`, `/runs`, `/moderators`, and `/docs` to the API so the browser stays same-origin (no `cors` package). HTML navigations are not proxied (SPA fallback). `API_PROXY_TARGET` overrides the proxy (Compose uses `http://api:3000`).
 
 `GET /moderators` and `GET /games/{gameId}/runs?status=` exist so the act-as control and pending queue do not hard-code fixture UUIDs. Domain rules are unchanged.
 
@@ -145,6 +145,16 @@ Supersedes “three fastest eligible runs” for the emoji. Gold / silver / bron
 ## 2026-10-15 — Games list counts are runs, not unique runners
 
 `GET /games` returns `totalRuns` (every status), `approvedRuns` (approved + no active ban), `pendingRuns`, and `bannedRuns` (approved + active ban) over every category of the game. `GET /games/{gameId}` repeats those game-wide fields and puts the same four counts on each category for the board UI. Search `q` is `ILIKE` on `games.name`. Sortable columns are wishlist.
+
+## 2026-10-15 — Compose runs api and web from one Node image
+
+`docker compose up` starts Postgres, the Express API (`tsx`), and Vite. One `Dockerfile` at the repo root (`npm ci`); services differ by `command`. No `cors` package: the browser hits the web origin and Vite proxies to `api`. Host `npm run dev` still works against Compose `db`. Rebuild the image after source changes.
+
+An **empty** Postgres volume runs `db/scripts/init.sh` (schema, fixture, bulk). `SEED_MODE=fixture` skips bulk on that first init only. A volume that already has data is **not** reset or re-seeded. Manual reload: `docker compose down -v` then `up`, or `db-reset` plus `db-seed-demo` / `db-seed`.
+
+## 2026-10-15 — `npm test` prints Node coverage
+
+The API suite is `node --test` via `tsx`. `--experimental-test-coverage` plus `--test-coverage-include=src/**/*.ts` prints line/branch/function coverage for `apps/api/src` with no extra package. No coverage floor is enforced locally; a CI gate is wishlist.
 
 ## 2026-10-15 — UI pager uses the existing `page` query
 
