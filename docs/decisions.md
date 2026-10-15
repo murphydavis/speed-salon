@@ -58,7 +58,9 @@ v1 uses resource identifiers, standard verbs, JSON representations, and meaningf
 
 **Fixture (tests + walking slice):** a handful of games (about 3–5), 2–3 categories each, default `Any%` where it exists; tens of runners; on the order of 10² runs; mostly approved, a visible pending queue, some rejected; **one dominant runner** with several approved times on one board; **one ban in each appeal state**; at least two moderators with **non-overlapping** game assignments; review events and splits on sampled runs. Deterministic (fixed RNG seed or fully scripted IDs).
 
-**Bulk (demo scale):** same shape, scaled to **a few hundred thousand runs**. Status mix roughly **~90% approved / ~7% pending / ~3% rejected** (order-of-magnitude, not a SLA). Runner activity is **skewed** (a few runners have many runs; most have few), not uniform. Games are few relative to runs. Load with `COPY` or batched inserts.
+**Bulk (demo scale):** same shape, scaled to **a few hundred thousand runs**. Status mix roughly **~90% approved / ~7% pending / ~3% rejected** (order-of-magnitude, not a SLA). Runner activity is **skewed** (a few runners have many runs; most have few), not uniform. Games are few relative to runs, but **at least 20 distinct games**. Load with `COPY` or batched inserts. **At least one board (game + category) has more than 10 000 eligible approved runs** so the default CSV cap and `ignoreMaxRows` can be exercised.
+
+After bulk is applied, **every table has at least 20 rows**: games, categories, runners, moderators, moderator_games, runs, run_splits, bans, review_events. **≥20 moderators**, **≥20 bans** spanning every appeal state, multi-moderator games and multi-game moderators, mixed category counts (including unset defaults), and sampled splits plus review events (approve, reject reasons, ban/appeal, set_default_category). Bulk uses its own UUID prefix `...-b...`; it does not add rows to fixture boards. Optional Compose command, not first-volume init — tests stay on fixture only. Re-applying after a bulk change: reset, fixture, then bulk.
 
 ## 2026-10-14 — Schema in `db/`; Compose init on empty volume
 

@@ -11,8 +11,8 @@ speed-salon/
   scripts/dev.mjs           # runs API + Vite together
   db/
     migrations/             # versioned SQL (001_schema.sql)
-    seed/                   # 001_fixture.sql
-    scripts/                # reset.sh, seed.sh (Compose tools profile)
+    seed/                   # 001_fixture.sql, 002_bulk.sql (optional, not init)
+    scripts/                # reset.sh, seed.sh, bulk.sh (Compose tools profile)
     queries/                # intended ranking SQL for the API
   docs/
     requirements.md

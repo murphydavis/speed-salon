@@ -48,5 +48,20 @@ services:
       - ./db:/db:ro
     entrypoint: ["/bin/sh", "/db/scripts/seed.sh"]
 
+  db-seed-bulk:
+    profiles: [tools]
+    image: postgres:16-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-speedsalon}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-speedsalon}
+      PGDATABASE: ${POSTGRES_DB:-speedsalon}
+    volumes:
+      - ./db:/db:ro
+    entrypoint: ["/bin/sh", "/db/scripts/bulk.sh"]
+
 volumes:
   postgres_data:

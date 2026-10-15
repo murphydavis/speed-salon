@@ -42,3 +42,15 @@ Full UUIDs share the prefix `00000000-0000-4000-`.
 | Pending SM64 Any% | `00000000-0000-4000-a500-000000000301` |
 | Rejected SM64 Any% | `00000000-0000-4000-a500-000000000302` |
 | Celeste pending (Bob can moderate; Alice cannot) | `00000000-0000-4000-a500-000000000502` |
+
+## Optional bulk seed
+
+Not loaded on Compose init. `docker compose --profile tools run --rm db-seed-bulk` (`db/seed/002_bulk.sql`). Prefix `00000000-0000-4000-b`. Does not write to fixture boards. After bulk, every table has ≥20 rows (24 games, 24 bulk mods, mixed appeal bans, multi-mod games). Re-load: reset, fixture, bulk.
+
+| Meaning | Id |
+|---------|-----|
+| Bulk Demo (Alice + extra mods) | `...b000-...0001` |
+| Bulk Demo Any% (>10 000 eligible; uncapped CSV) | `...b100-...0001` |
+| Bulk Secondary (Bob + extra mods) | `...b000-...0002` |
+| Bulk games 03–24 | `...b000-...0003` … `...0024` |
+| Bulk mods 01–24 | `...b200-...0001` … `...0024` |

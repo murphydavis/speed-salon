@@ -43,7 +43,7 @@ Logical model for v1. Table names may be pluralized in SQL; meanings must not ch
 - `payload` JSON: reject reason + comment, ban/appeal transitions, default category change, etc.
 - **No updates, no deletes** in application code.
 
-Suggested `action` values: `approve`, `reject`, `ban`, `unban`, `appeal_submit`, `appeal_reject`, `appeal_approve`, `set_default_category`.
+Suggested `action` values: `approve`, `reject`, `ban`, `unban`, `appeal_submit`, `appeal_reject`, `appeal_approve`, `set_default_category`. Wishlist later: `assign_game` / `unassign_game` for super-moderator assignment changes.
 
 ### `bans`
 

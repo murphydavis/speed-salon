@@ -4,7 +4,7 @@ Moderator console for a speedrunning website: leaderboards by **game + category*
 
 This repository is a take-home for a senior full-stack role (Node / Express / TypeScript / Postgres / React). It is an **initial best attempt** at the platform, not a years-polished production tool. The prompt’s ~2 hours is a scope hint. It is designed to run locally with Docker Compose once the runtime is added.
 
-**You are here:** Postgres + walking-slice API + crude web console (board, ranking toggle, run review, act-as).
+**You are here:** Postgres + API + crude web console. Optional bulk seed for CSV-cap scale. Compose does not yet start api/web.
 
 ## How to run
 
@@ -31,7 +31,13 @@ docker compose --profile tools run --rm db-reset
 docker compose --profile tools run --rm db-seed
 ```
 
-Seed expects an empty schema (run reset first if data already exists).
+Seed expects an empty schema (run reset first if data already exists). Optional **bulk** load (~200 000 runs, one board over 10 000 eligible for uncapped CSV). Does not run on first Compose init. After fixture:
+
+```bash
+docker compose --profile tools run --rm db-seed-bulk
+```
+
+Bulk Demo Any% (Alice): `00000000-0000-4000-b000-000000000001`. After bulk, every table has ≥20 rows. Reset drops it with the database. Changing bulk SQL requires reset + fixture + bulk.
 
 ## Repository layout
 
@@ -56,15 +62,14 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 
 Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftovers:
 
-- Phase 1 leftover: **bulk seed** (hundreds of thousands of runs)
 - Phase 3 leftover: Compose `api`/`web` services
 - Search on the board is runner-name only (no extra filter chips beyond pending/banned toggles)
 - Appeal evidence storage (intentionally deferred; see data model stub)
-- Wishlist (not this assignment): player profiles; moderator dashboard; async export jobs + S3-class storage; run VODs/supporting files; paired public/runner app (web or email submit) — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
+- Wishlist (not this assignment): player profiles; moderator dashboard; assignment matrix + super-moderator; moderator profiles/history; async export jobs + S3-class storage; run VODs/supporting files; paired public/runner app (web or email submit) — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
 
 ## What we would do next
 
-Next: bulk seed and Compose `api`/`web` — see [`docs/roadmap.md`](docs/roadmap.md).
+Next: Compose `api`/`web` so `docker compose up` is the full demo — see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Maintaining this project
 

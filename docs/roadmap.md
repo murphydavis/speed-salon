@@ -42,7 +42,7 @@ Design and implement the database to match [`data-model.md`](data-model.md).
 - [x] Indexes required for leaderboard and seed scale (2026-10-14)
 - [x] Migrations (or equivalent versioned SQL) wired so a fresh Compose Postgres comes up empty then migrates (2026-10-14)
 - [x] **Fixture seed** — small, deterministic, fast; enough to prove player vs run ranking, reject/approve, ACL-relevant assignments, and every appeal state (2026-10-14)
-- [ ] **Bulk seed** — on the order of a few hundred thousand runs, via `COPY` / batched insert, using the distribution in [`decisions.md`](decisions.md)
+- [x] **Bulk seed** — ~200 000 runs on separate games; one board >10 000 eligible approved runs for uncapped CSV (2026-10-15)
 
 Compose Postgres belongs here so the schema has a place to live. Full `docker compose up` of api + web can wait until those apps exist, except as needed for the walking slice.
 
@@ -91,6 +91,9 @@ Not a phase until promoted here with a checkbox. **Wishlist** items are not assi
 
 - Player profile pages: list any runs by that runner (all games/categories, not only the current board).
 - Moderator home dashboard: links to assigned games and a pending queue across those games. The games list already marks assignments; this would be a dedicated landing page.
+- Assignment matrix: who is assigned to which games, filterable by moderator or by game.
+- Super-moderator / admin: set and unset moderator↔game assignments. Every change appends an immutable review event (same rule as all moderator actions). New `review_action` values (e.g. `assign_game` / `unassign_game`) when this is scheduled — not in the take-home enum.
+- Moderator profile: that person’s game assignments and action history (approve/reject, ban, appeal decide). Distinct from the home dashboard.
 - Durable API logs (ship JSONL off the box). Hosting (AWS vs elsewhere) is undecided; do not pick CloudWatch/ELK in this take-home. Local `logs/api.log` is enough for now; see [`decisions.md`](decisions.md).
 - Prisma or similar ORM (typed CRUD, generated client). Current persistence is `pg` + explicit SQL; see [`decisions.md`](decisions.md). Do not introduce an ORM during this take-home.
 - Appeal documents and correspondence (stubbed in [`data-model.md`](data-model.md))

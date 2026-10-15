@@ -40,7 +40,7 @@ CSV is generated **on the API** from the same query parameters as the HTML table
 Two loads, both using bulk SQL (`COPY` or batched inserts), never hundreds of thousands of ORM `save()` calls:
 
 - **Fixture** — `db/seed/001_fixture.sql`, applied on first Compose init. IDs: [`docs/fixture.md`](fixture.md)
-- **Bulk** — not implemented yet; same shape, scaled (see `docs/decisions.md`)
+- **Bulk** — `db/seed/002_bulk.sql` via `docker compose --profile tools run --rm db-seed-bulk`. Own games (not fixture boards). ≥20 rows in every table; one board exceeds 10 000 eligible runs for `ignoreMaxRows`. See `docs/decisions.md`.
 
 Compose service `db` is Postgres 16. Init files run only on an empty volume.
 

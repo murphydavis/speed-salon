@@ -80,7 +80,7 @@ Adding a reason is a product change: update this table, `packages/shared`, and t
 ### Seed data
 
 - **Fixture seed:** small and deterministic. Must include everything the walking slice and constitution tests need (player vs run ranking with a dominant runner, pending/approved/rejected, each ban appeal state, split review history, mods not assigned to every game).
-- **Bulk seed:** enough fake data to feel like a real site: **on the order of a few hundred thousand runs**, multiple games, multiple categories per game, many runners, mixed statuses. Same invariants as the fixture, scaled. Skew is specified in `docs/decisions.md`.
+- **Bulk seed:** enough fake data to feel like a real site: **on the order of a few hundred thousand runs**, **at least 20 games**, multiple categories per game, many runners, mixed statuses. Same invariants as the fixture, scaled. Skew is specified in `docs/decisions.md`. **At least one board has more than 10 000 eligible approved runs**. After bulk, **no table has fewer than 20 rows** (≥20 moderators, ≥20 bans in every appeal state, multi-moderator games, etc.). Tests must not require this load.
 - Tests run against the fixture (or a migration-only empty DB plus fixture). Tests must not require the bulk load.
 
 ## Out of scope (defer; note in README)
