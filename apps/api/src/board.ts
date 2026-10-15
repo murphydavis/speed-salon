@@ -29,13 +29,18 @@ export async function assembleBoard(
     limit: number | null;
     includePending: boolean;
     includeBanned: boolean;
+    includeApproved: boolean;
   },
 ): Promise<{ items: BoardItem[]; total: number }> {
   const extrasOn = opts.includePending || opts.includeBanned;
-  const rankedPage = extrasOn ? 1 : opts.page;
-  const rankedLimit = extrasOn ? null : opts.limit;
+  const showApproved = opts.includeApproved;
+  const mergeView = extrasOn || !showApproved;
+  const rankedPage = mergeView ? 1 : opts.page;
+  const rankedLimit = mergeView ? null : opts.limit;
   const [{ items, total: rankedTotal }, playerPlaces, runPlaces] = await Promise.all([
-    listLeaderboard(pool, opts.categoryId, opts.mode, opts.q, rankedPage, rankedLimit),
+    showApproved
+      ? listLeaderboard(pool, opts.categoryId, opts.mode, opts.q, rankedPage, rankedLimit)
+      : Promise.resolve({ items: [], total: 0 }),
     listPlayerPlaces(pool, opts.categoryId),
     listPodiumRunPlaces(pool, opts.categoryId),
   ]);
@@ -50,7 +55,7 @@ export async function assembleBoard(
         null,
       )
     : [];
-  const offset = extrasOn || opts.limit === null ? 0 : (opts.page - 1) * opts.limit;
+  const offset = mergeView || opts.limit === null ? 0 : (opts.page - 1) * opts.limit;
   const ranked: BoardItem[] = items.map((row, i) => ({
     place: offset + i + 1,
     runId: row.id,
@@ -71,7 +76,7 @@ export async function assembleBoard(
       timeMs: row.timeMs,
       submittedAt: row.submittedAt,
       kind: row.kind,
-      isPb: row.isPb,
+      isPb: false,
       playerPlace: null,
       runPlace: null,
       runner: { id: row.runnerId, name: row.runnerName },
@@ -83,7 +88,7 @@ export async function assembleBoard(
     if (at !== bt) return at - bt;
     return a.runId.localeCompare(b.runId);
   });
-  if (!extrasOn) return { items: merged, total: rankedTotal };
+  if (!mergeView) return { items: merged, total: rankedTotal };
   const total = merged.length;
   if (opts.limit === null) return { items: merged, total };
   const start = (opts.page - 1) * opts.limit;
@@ -92,7 +97,7 @@ export async function assembleBoard(
 
 export function toCsv(
   items: BoardItem[],
-  flags: { includePending: boolean; includeBanned: boolean },
+  flags: { includePending: boolean; includeBanned: boolean; includeApproved: boolean },
 ): string {
   const header = [
     "place",
@@ -106,6 +111,7 @@ export function toCsv(
     "run_id",
     "include_pending",
     "include_banned",
+    "include_approved",
   ];
   const lines = [header.join(",")];
   for (const row of items) {
@@ -126,6 +132,7 @@ export function toCsv(
         row.runId,
         flags.includePending ? "true" : "false",
         flags.includeBanned ? "true" : "false",
+        flags.includeApproved ? "true" : "false",
       ].join(","),
     );
   }

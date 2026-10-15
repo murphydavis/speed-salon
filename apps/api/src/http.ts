@@ -21,6 +21,12 @@ export function parseFlag(raw: unknown): boolean {
   throw new ApiError(400, "invalid_query", "flag must be true or false");
 }
 
+/** Omitted means show eligible approved runs. */
+export function parseIncludeApproved(raw: unknown): boolean {
+  if (raw === undefined) return true;
+  return parseFlag(raw);
+}
+
 export function parseLimit(raw: unknown): number {
   if (raw === undefined) return DEFAULT_LIMIT;
   const n = Number(raw);

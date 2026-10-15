@@ -83,6 +83,7 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 - [x] Remaining requirements: search, CSV, set default, ban/appeal visibility and actions (2026-10-15)
 - [x] List pagination in the UI: first / previous / next / last and a page field (2026-10-15)
 - [x] Games list: name search and total / approved / pending / banned run counts (2026-10-15)
+- [x] Hide approved runs on a board (moderator work view; medals stay on the eligible ladder) (2026-10-15)
 - [ ] Compose includes `web` so `docker compose up` is the full local demo
 
 ---
@@ -94,6 +95,7 @@ Not a phase until promoted here with a checkbox. **Wishlist** items are not assi
 - **Near / easy:** Click-to-sort columns on the games list (name, counts) and on the board (place, runner, time, submitted). Short-term win; not built yet.
 - **Near:** Moderator notifications (in-app). Queue for review events that matter to assigned games (new pending runs, bans, appeals). Later feeds can include anomaly alerts from stats below.
 - **Medium:** Moderator discussion board — general-purpose talk among mods, not appeal correspondence (that stays the appeal stub).
+- **Medium:** Show **rejected** runs on a board (with reject reason, comment, and review history) for training, comparison to pending, and later review or reversal of past decisions. Not built; hiding approved / showing pending and banned is the current work queue.
 - **Long / low:** Visualizations and stats on runs (time distributions, progression over submitted_at). Could illustrate getting faster over time, or flag incongruous jumps in a runner’s times as suspicious — those flags would notify moderators, not auto-reject. Not anti-cheat product in this take-home.
 - Player profile pages: list any runs by that runner (all games/categories, not only the current board).
 - Moderator home dashboard: links to assigned games and a pending queue across those games. The games list already marks assignments; this would be a dedicated landing page.

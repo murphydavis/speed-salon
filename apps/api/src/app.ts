@@ -13,7 +13,7 @@ import { getGame, listGames, resolveBoardCategoryId, setDefaultCategory } from "
 import type { Pool } from "./db/pool.js";
 import { approveRun, getRun, listGameRuns, rejectRun, runGameId } from "./db/runs.js";
 import { ApiError } from "./errors.js";
-import { CSV_MAX_ROWS, parseFlag, parseLimit, parsePage } from "./http.js";
+import { CSV_MAX_ROWS, parseFlag, parseIncludeApproved, parseLimit, parsePage } from "./http.js";
 import { requireModerator } from "./middleware/moderator.js";
 import { requestLog } from "./middleware/request-log.js";
 import { mountOpenApiDocs } from "./openapi-docs.js";
@@ -73,6 +73,7 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
     const flags = {
       includePending: board.includePending,
       includeBanned: board.includeBanned,
+      includeApproved: board.includeApproved,
     };
     res.setHeader(
       "content-disposition",
@@ -94,6 +95,7 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
       total: board.total,
       includePending: board.includePending,
       includeBanned: board.includeBanned,
+      includeApproved: board.includeApproved,
       items: board.items,
       next: nextLink(req.path, page, limit, board.total, req.query),
     });
@@ -188,7 +190,8 @@ async function loadBoard(pool: Pool, req: Request, limit: number | null, page: n
   const q = qRaw?.trim() ? qRaw.trim() : undefined;
   const includePending = parseFlag(req.query.includePending);
   const includeBanned = parseFlag(req.query.includeBanned);
-  if (includePending || includeBanned) {
+  const includeApproved = parseIncludeApproved(req.query.includeApproved);
+  if (includePending || includeBanned || !includeApproved) {
     await requireAssignedToGame(pool, req, req.params.gameId);
   }
   const assembled = await assembleBoard(pool, {
@@ -199,8 +202,9 @@ async function loadBoard(pool: Pool, req: Request, limit: number | null, page: n
     limit,
     includePending,
     includeBanned,
+    includeApproved,
   });
-  return { ...assembled, categoryId, mode, includePending, includeBanned };
+  return { ...assembled, categoryId, mode, includePending, includeBanned, includeApproved };
 }
 
 async function mutateAssigned<T>(

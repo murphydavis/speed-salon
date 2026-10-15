@@ -63,9 +63,10 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftovers:
 
 - Phase 3 leftover: Compose `api`/`web` services
-- Search on the board is runner-name only (no extra filter chips beyond pending/banned toggles)
+- Search on the board is runner-name only (no extra filter chips beyond approved/pending/banned toggles)
+- Rejected runs are not mixed onto the board (wishlist: training/review of past rejects)
 - Appeal evidence storage (intentionally deferred; see data model stub)
-- Wishlist (not this assignment): sortable columns on games list and boards (easy short-term); near-term notifications; medium-term mod discussion board; long-term run stats/visualizations; player profiles; moderator dashboard; assignment matrix + super-moderator; moderator profiles/history; async export jobs + S3-class storage; run VODs/supporting files; paired public/runner app — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
+- Wishlist (not this assignment): sortable columns on games list and boards (easy short-term); near-term notifications; medium-term mod discussion board and rejected-run board review; long-term run stats/visualizations; player profiles; moderator dashboard; assignment matrix + super-moderator; moderator profiles/history; async export jobs + S3-class storage; run VODs/supporting files; paired public/runner app — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
 
 ## What we would do next
 

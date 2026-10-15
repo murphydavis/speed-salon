@@ -204,6 +204,34 @@ describe("leaderboard", () => {
     assert.equal(second.isPb, true);
   });
 
+  test("includeApproved=false omits ranked runs without promoting medals", async () => {
+    const res = await fetch(
+      `${base}/games/${SM64}/leaderboard?includeApproved=false&includePending=true`,
+    );
+    assert.equal(res.status, 401);
+    const hidden = await json(
+      `/games/${SM64}/leaderboard?limit=50&includeApproved=false&includePending=true&includeBanned=true`,
+      { [MODERATOR_HEADER]: ALICE },
+    );
+    assert.ok(hidden.items.length >= 1);
+    assert.ok(hidden.items.every((row: { kind: string; place: number | null }) => row.kind !== "ranked"));
+    assert.ok(hidden.items.every((row: { playerPlace: number | null }) => row.playerPlace == null));
+    const full = await json(`/games/${SM64}/leaderboard?limit=50`);
+    const gold = full.items.find(
+      (row: { isPb: boolean; playerPlace: number | null; runner: { name: string } }) =>
+        row.isPb && row.playerPlace === 1,
+    );
+    assert.equal(gold.runner.name, "DashMain");
+    const csv = await fetch(
+      `${base}/games/${SM64}/leaderboard.csv?includeApproved=false&includePending=true`,
+      { headers: { [MODERATOR_HEADER]: ALICE } },
+    );
+    assert.match(
+      csv.headers.get("content-disposition") ?? "",
+      /filename="sm64-leaderboard-\d{4}-\d{2}-\d{2}T\d{6}Z-pending-no-approved\.csv"/,
+    );
+  });
+
   test("search q=DashMain returns that runner", async () => {
     const body = await json(`/games/${SM64}/leaderboard?q=DashMain`);
     assert.ok(body.items.length >= 1);
@@ -233,7 +261,7 @@ describe("csv and default category", () => {
       res.headers.get("content-disposition") ?? "",
       /filename="sm64-leaderboard-\d{4}-\d{2}-\d{2}T\d{6}Z\.csv"/,
     );
-    assert.match(text, /include_pending,include_banned/);
+    assert.match(text, /include_pending,include_banned,include_approved/);
   });
 
   test("csv include flags appear in filename and columns", async () => {
@@ -248,7 +276,7 @@ describe("csv and default category", () => {
     );
     const text = await res.text();
     assert.match(text, /PendingPatty/);
-    assert.match(text, /,true,true\r?\n/);
+    assert.match(text, /,true,true,true\r?\n/);
   });
 
   test("csv empty q is the full board", async () => {

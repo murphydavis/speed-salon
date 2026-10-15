@@ -21,6 +21,7 @@ Walking slice (in the test file):
 - [x] Game pending queue includes PendingPatty
 - [x] includePending without header → 401; wrong-game mod → 403
 - [x] Assigned mod can mix pending/banned; places stay eligible-only; total includes extras
+- [x] includeApproved=false without header → 401; hiding approved leaves pending/banned without promoting medals; full board medals unchanged
 
 - [x] Search q=DashMain returns that runner
 - [x] Search does not re-rank Olympic playerPlace (BannedAppealWon stays 2)

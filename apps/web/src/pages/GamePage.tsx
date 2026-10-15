@@ -22,6 +22,7 @@ export function GamePage({
   const categoryId = params.get("categoryId") ?? undefined;
   const includePending = assigned && params.get("includePending") === "1";
   const includeBanned = assigned && params.get("includeBanned") === "1";
+  const includeApproved = !assigned || params.get("includeApproved") !== "0";
   const q = params.get("q") ?? "";
   const pageRaw = Number(params.get("page"));
   const page = Number.isInteger(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
@@ -38,6 +39,7 @@ export function GamePage({
     categoryId?: string;
     includePending?: boolean;
     includeBanned?: boolean;
+    includeApproved?: boolean;
     q?: string;
     page?: number;
   }) {
@@ -46,12 +48,14 @@ export function GamePage({
     const nextCat = next.categoryId ?? categoryId;
     const nextPending = next.includePending ?? includePending;
     const nextBanned = next.includeBanned ?? includeBanned;
+    const nextApproved = next.includeApproved ?? includeApproved;
     const nextQ = next.q ?? q;
     const filterChanged =
       next.mode !== undefined ||
       next.categoryId !== undefined ||
       next.includePending !== undefined ||
       next.includeBanned !== undefined ||
+      next.includeApproved !== undefined ||
       next.q !== undefined;
     const nextPage = next.page ?? (filterChanged ? 1 : page);
     if (nextMode !== "players") qs.set("mode", nextMode);
@@ -59,6 +63,7 @@ export function GamePage({
     if (nextQ.trim()) qs.set("q", nextQ.trim());
     if (assigned && nextPending) qs.set("includePending", "1");
     if (assigned && nextBanned) qs.set("includeBanned", "1");
+    if (assigned && nextApproved === false) qs.set("includeApproved", "0");
     if (nextPage > 1) qs.set("page", String(nextPage));
     const encoded = qs.toString();
     navigate(`/games/${gameId}${encoded ? `?${encoded}` : ""}`);
@@ -73,11 +78,13 @@ export function GamePage({
     if (q.trim()) qs.set("q", q.trim());
     if (includePending) qs.set("includePending", "true");
     if (includeBanned) qs.set("includeBanned", "true");
+    if (!includeApproved) qs.set("includeApproved", "false");
     if (page > 1) qs.set("page", String(page));
     Promise.all([
       api<GameDetail>(`/games/${gameId}`),
       api<LeaderboardPage>(`/games/${gameId}/leaderboard?${qs.toString()}`, {
-        moderatorId: includePending || includeBanned ? moderatorId : undefined,
+        moderatorId:
+          includePending || includeBanned || !includeApproved ? moderatorId : undefined,
       }),
     ])
       .then(([g, lb]) => {
@@ -91,7 +98,17 @@ export function GamePage({
     return () => {
       cancelled = true;
     };
-  }, [gameId, mode, categoryId, includePending, includeBanned, moderatorId, q, page]);
+  }, [
+    gameId,
+    mode,
+    categoryId,
+    includePending,
+    includeBanned,
+    includeApproved,
+    moderatorId,
+    q,
+    page,
+  ]);
 
   if (error) return <p className="error">{error}</p>;
   if (!game || !board) return <p className="muted">Loading…</p>;
@@ -223,14 +240,19 @@ export function GamePage({
             if (exportQ) qs.set("q", exportQ);
             if (includePending) qs.set("includePending", "true");
             if (includeBanned) qs.set("includeBanned", "true");
+            if (!includeApproved) qs.set("includeApproved", "false");
             if (ignoreMaxRows) qs.set("ignoreMaxRows", "true");
             apiDownload(
               `/games/${gameId}/leaderboard.csv?${qs.toString()}`,
               csvExportFilename(game.slug, new Date(), {
                 includePending,
                 includeBanned,
+                includeApproved,
               }),
-              { moderatorId: includePending || includeBanned ? moderatorId : undefined },
+              {
+                moderatorId:
+                  includePending || includeBanned || !includeApproved ? moderatorId : undefined,
+              },
             ).catch((err: unknown) =>
               setActionError(err instanceof ApiRequestError ? err.message : String(err)),
             );
@@ -269,9 +291,18 @@ export function GamePage({
           >
             {includeBanned ? "Hide banned" : "Show banned"}
           </button>
+          <button
+            type="button"
+            className={includeApproved ? "active" : ""}
+            onClick={() => setQuery({ includeApproved: !includeApproved })}
+          >
+            {includeApproved ? "Hide approved" : "Show approved"}
+          </button>
         </div>
       ) : (
-        <p className="muted">Act as an assigned moderator to show pending or banned runs on this board.</p>
+        <p className="muted">
+          Act as an assigned moderator to show pending or banned runs, or hide approved runs.
+        </p>
       )}
 
       <table>

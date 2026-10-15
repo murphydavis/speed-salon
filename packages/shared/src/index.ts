@@ -30,9 +30,15 @@ export type AppealState = (typeof APPEAL_STATES)[number];
 export function csvExportFilename(
   slug: string,
   at: Date = new Date(),
-  flags: { includePending?: boolean; includeBanned?: boolean } = {},
+  flags: {
+    includePending?: boolean;
+    includeBanned?: boolean;
+    includeApproved?: boolean;
+  } = {},
 ): string {
   const stamp = `${at.toISOString().slice(0, 19).replaceAll(":", "")}Z`;
-  const extras = `${flags.includePending ? "-pending" : ""}${flags.includeBanned ? "-banned" : ""}`;
+  const extras = `${flags.includePending ? "-pending" : ""}${flags.includeBanned ? "-banned" : ""}${
+    flags.includeApproved === false ? "-no-approved" : ""
+  }`;
   return `${slug}-leaderboard-${stamp}${extras}.csv`;
 }

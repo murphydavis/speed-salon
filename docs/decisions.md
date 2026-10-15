@@ -114,6 +114,10 @@ Durable shipping (CloudWatch, OpenSearch, a log vendor) waits on hosting choices
 
 `includePending` / `includeBanned` on the leaderboard reuse existing `runs` + `bans`. Ranked `place` stays eligible-only. Extra runs are mixed in by time.
 
+## 2026-10-15 — Assigned mods can hide approved runs on a board
+
+`includeApproved` defaults **true**. `includeApproved=false` omits eligible ranked runs from the page and CSV so a moderator can stare at pending/banned only. `playerPlace` / `isPb` are still computed from the full eligible approved ladder (same as search); hiding approved does not promote anyone. Filename suffix `-no-approved`. Column `include_approved`. Assigned header required, same as the other include flags. Rejected runs on the board are wishlist.
+
 ## 2026-10-15 — Include flags join pagination total
 
 Supersedes extras-only-on-the-current-page. When either include flag is true, `total` is eligible + extras, and `page`/`limit` slice that merged list. Place numbers are still eligible rank. CSV records the flags in the filename (`-pending`, `-banned`) and in `include_pending` / `include_banned` columns. Assigned-moderator header required when either flag is true.
