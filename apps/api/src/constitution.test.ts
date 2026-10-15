@@ -79,8 +79,9 @@ describe("leaderboard", () => {
     const names = body.items.map((row: { runner: { name: string } }) => row.runner.name);
     assert.equal(names.filter((n: string) => n === "DashMain").length, 1);
     assert.equal(body.items[0].runner.name, "DashMain");
-    assert.equal(body.items[0].runPlace, 1);
-    assert.ok(body.items.slice(1).every((row: { runPlace: number | null }) => row.runPlace == null));
+    assert.equal(body.items[0].playerPlace, 1);
+    assert.equal(body.items[1].playerPlace, 2);
+    assert.equal(body.items[2].playerPlace, 3);
     assert.ok(!names.includes("PendingPatty"));
     assert.ok(!names.includes("RejectRay"));
     assert.ok(!names.includes("BannedNoAppeal"));
@@ -124,11 +125,12 @@ describe("leaderboard", () => {
     assert.equal(body.items[0].runId, DASH_PB);
     assert.equal(dash[0].isPb, true);
     assert.equal(dash[0].playerPlace, 1);
-    assert.equal(dash[0].runPlace, 1);
-    assert.equal(dash[1].runPlace, 2);
-    assert.equal(dash[2].runPlace, 3);
-    assert.ok(dash.slice(3).every((row: { runPlace: number | null }) => row.runPlace == null));
-    assert.ok(dash.slice(1).every((row: { isPb: boolean }) => row.isPb === false));
+    assert.ok(
+      dash.slice(1).every(
+        (row: { isPb: boolean; playerPlace: number | null }) =>
+          row.isPb === false && row.playerPlace === 1,
+      ),
+    );
     const won = body.items.find(
       (row: { runner: { name: string }; isPb: boolean }) =>
         row.runner.name === "BannedAppealWon" && row.isPb,
@@ -139,7 +141,7 @@ describe("leaderboard", () => {
         row.runner.name === "SecondPlace" && row.isPb,
     );
     assert.equal(second.playerPlace, 3);
-    assert.equal(second.runPlace, null);
+    assert.equal(second.isPb, true);
   });
 
   test("search q=DashMain returns that runner", async () => {

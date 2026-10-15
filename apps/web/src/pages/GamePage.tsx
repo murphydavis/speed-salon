@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, apiDownload, ApiRequestError } from "../api.js";
 import { formatSubmitted, formatTime } from "../format.js";
 import { navigate } from "../nav.js";
+import { Pager } from "../Pager.js";
 import type { GameDetail, LeaderboardPage } from "../types.js";
 
 export function GamePage({
@@ -22,6 +23,8 @@ export function GamePage({
   const includePending = assigned && params.get("includePending") === "1";
   const includeBanned = assigned && params.get("includeBanned") === "1";
   const q = params.get("q") ?? "";
+  const pageRaw = Number(params.get("page"));
+  const page = Number.isInteger(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
 
   const [game, setGame] = useState<GameDetail | null>(null);
   const [board, setBoard] = useState<LeaderboardPage | null>(null);
@@ -36,6 +39,7 @@ export function GamePage({
     includePending?: boolean;
     includeBanned?: boolean;
     q?: string;
+    page?: number;
   }) {
     const qs = new URLSearchParams();
     const nextMode = next.mode ?? mode;
@@ -43,11 +47,19 @@ export function GamePage({
     const nextPending = next.includePending ?? includePending;
     const nextBanned = next.includeBanned ?? includeBanned;
     const nextQ = next.q ?? q;
+    const filterChanged =
+      next.mode !== undefined ||
+      next.categoryId !== undefined ||
+      next.includePending !== undefined ||
+      next.includeBanned !== undefined ||
+      next.q !== undefined;
+    const nextPage = next.page ?? (filterChanged ? 1 : page);
     if (nextMode !== "players") qs.set("mode", nextMode);
     if (nextCat) qs.set("categoryId", nextCat);
     if (nextQ.trim()) qs.set("q", nextQ.trim());
     if (assigned && nextPending) qs.set("includePending", "1");
     if (assigned && nextBanned) qs.set("includeBanned", "1");
+    if (nextPage > 1) qs.set("page", String(nextPage));
     const encoded = qs.toString();
     navigate(`/games/${gameId}${encoded ? `?${encoded}` : ""}`);
   }
@@ -61,6 +73,7 @@ export function GamePage({
     if (q.trim()) qs.set("q", q.trim());
     if (includePending) qs.set("includePending", "true");
     if (includeBanned) qs.set("includeBanned", "true");
+    if (page > 1) qs.set("page", String(page));
     Promise.all([
       api<GameDetail>(`/games/${gameId}`),
       api<LeaderboardPage>(`/games/${gameId}/leaderboard?${qs.toString()}`, {
@@ -78,7 +91,7 @@ export function GamePage({
     return () => {
       cancelled = true;
     };
-  }, [gameId, mode, categoryId, includePending, includeBanned, moderatorId, q]);
+  }, [gameId, mode, categoryId, includePending, includeBanned, moderatorId, q, page]);
 
   if (error) return <p className="error">{error}</p>;
   if (!game || !board) return <p className="muted">Loading…</p>;
@@ -294,25 +307,32 @@ export function GamePage({
         </tbody>
       </table>
       {board.items.length === 0 ? <p className="muted">No runs to show on this board.</p> : null}
+      <Pager
+        page={board.page}
+        limit={board.limit}
+        total={board.total}
+        onPage={(n) => setQuery({ page: n })}
+      />
     </>
   );
 }
 
-function rankMark(mode: RankingMode, row: { isPb: boolean; runPlace: number | null }) {
-  const podium = row.runPlace === 1 || row.runPlace === 2 || row.runPlace === 3;
-  const medal = podium
-    ? row.runPlace === 1
+function rankMark(mode: RankingMode, row: { isPb: boolean; playerPlace: number | null }) {
+  const podium = row.playerPlace === 1 || row.playerPlace === 2 || row.playerPlace === 3;
+  const showMedal = podium && (mode === "players" || row.isPb);
+  const medal = showMedal
+    ? row.playerPlace === 1
       ? "🥇"
-      : row.runPlace === 2
+      : row.playerPlace === 2
         ? "🥈"
         : "🥉"
     : null;
   const label =
-    row.runPlace === 1 ? "1st" : row.runPlace === 2 ? "2nd" : row.runPlace === 3 ? "3rd" : null;
+    row.playerPlace === 1 ? "1st" : row.playerPlace === 2 ? "2nd" : row.playerPlace === 3 ? "3rd" : null;
   return (
     <>
       {medal && label ? (
-        <span className="trophy" title={`Global ${label} fastest run`}>
+        <span className="trophy" title={`Player ${label} (PB)`}>
           {" "}
           {medal}
         </span>

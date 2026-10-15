@@ -119,6 +119,25 @@ button.active {
   color: #fff;
 }
 
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+}
+
+.pager form {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pager input[type="number"] {
+  width: 4.5rem;
+  font: inherit;
+}
+
 form.stack {
   display: grid;
   gap: 0.5rem;

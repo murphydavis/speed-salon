@@ -130,4 +130,12 @@ Export uses the same category, mode, search, and include flags as the HTML table
 
 Supersedes treating gold/silver/bronze as player-ladder marks on PBs. The podium is the global run ranking for the category: the three lowest eligible times. `runPlace` is 1–3 for those runs and null otherwise. Player place stays available for PB context; it does not choose the emoji.
 
+## 2026-10-15 — Medals follow player PBs (Olympic)
+
+Supersedes “three fastest eligible runs” for the emoji. Gold / silver / bronze are 1st / 2nd / 3rd on the **player** board, shown on that runner’s PB row in both ranking modes. One person cannot take gold, silver, and bronze with three throws. `runPlace` may still name the three fastest *runs* in the API/CSV; the UI medals use `playerPlace` and `isPb`.
+
+## 2026-10-15 — UI pager uses the existing `page` query
+
+Games list and board fetch `page` (default 1) and `limit` already returned by the API. The UI adds first / previous / next / last and a numeric seek. Filter changes drop `page` so the view returns to 1. No extra endpoints.
+
 ## Open (resolve when implementing)

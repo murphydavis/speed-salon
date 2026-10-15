@@ -12,7 +12,7 @@ Error body: `{ "status": number, "code": string, "message": string }`. Mutations
 | GET | `/games` | Paginated. Query: `page`, `limit`. |
 | GET | `/games/{gameId}` | Categories; resolved default board. |
 | GET | `/games/{gameId}/runs` | Query: `status` (required: `pending` \| `approved` \| `rejected`), `page`, `limit`. Non-approved lists need assignment. |
-| GET | `/games/{gameId}/leaderboard` | Query: `categoryId`, `mode`, `q`, `page`, `limit`, `includePending`, `includeBanned`. Rows include `submittedAt`, `isPb`, `playerPlace`, `runPlace` (1–3 on the globally fastest eligible runs). Extras have `place: null`. Empty `q` is the full board. |
+| GET | `/games/{gameId}/leaderboard` | Query: `categoryId`, `mode`, `q`, `page`, `limit`, `includePending`, `includeBanned`. Rows include `submittedAt`, `isPb`, `playerPlace` (player-ladder rank; medals 1–3 on the PB), `runPlace` (1–3 on the fastest eligible *runs*, not the emoji). Extras have `place: null`. Empty `q` is the full board. |
 | GET | `/games/{gameId}/leaderboard.csv` | Same query as the board. Omit `q` (or leave it empty) for the entire board. Default cap 10 000. `ignoreMaxRows=true` attempts no cap (may fail). |
 | POST | `/games/{gameId}/default-category` | Body `{ "categoryId" }`. Assigned only. |
 | POST | `/games/{gameId}/bans` | Body `{ "runnerId", "comment" }`. Site-wide ban. |

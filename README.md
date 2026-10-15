@@ -65,7 +65,7 @@ Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftov
 - Phase 3 leftover: Compose `api`/`web` services
 - Search on the board is runner-name only (no extra filter chips beyond pending/banned toggles)
 - Appeal evidence storage (intentionally deferred; see data model stub)
-- Wishlist (not this assignment): player profiles; moderator dashboard; assignment matrix + super-moderator; moderator profiles/history; async export jobs + S3-class storage; run VODs/supporting files; paired public/runner app (web or email submit) — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
+- Wishlist (not this assignment): near-term notifications; medium-term mod discussion board; long-term run stats/visualizations; player profiles; moderator dashboard; assignment matrix + super-moderator; moderator profiles/history; async export jobs + S3-class storage; run VODs/supporting files; paired public/runner app — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
 
 ## What we would do next
 

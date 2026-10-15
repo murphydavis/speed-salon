@@ -23,7 +23,7 @@ Walking slice (in the test file):
 
 - [x] Search q=DashMain returns that runner
 - [x] CSV with no `q` exports the full board (DashMain and SecondPlace)
-- [x] Global podium: runPlace 1–3 are DashMain’s three fastest runs; SecondPlace PB is not bronze
+- [x] Player podium: DashMain PB is gold (`playerPlace` 1); non-PB DashMain times are not silver/bronze; SecondPlace PB is bronze
 - [x] CSV `ignoreMaxRows=true` is accepted and still returns CSV
 - [x] Set default category (assigned only)
 - [x] Ban removes runner from the board; lift restores

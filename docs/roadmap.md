@@ -81,6 +81,7 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 - [x] Walking-slice UI: game default board, ranking toggle, run detail, approve/reject, act-as header (2026-10-15)
 - [x] Category switch on the game page (2026-10-15; API already had `categoryId`)
 - [x] Remaining requirements: search, CSV, set default, ban/appeal visibility and actions (2026-10-15)
+- [x] List pagination in the UI: first / previous / next / last and a page field (2026-10-15)
 - [ ] Compose includes `web` so `docker compose up` is the full local demo
 
 ---
@@ -89,6 +90,9 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 
 Not a phase until promoted here with a checkbox. **Wishlist** items are not assignment work unless they are moved up.
 
+- **Near:** Moderator notifications (in-app). Queue for review events that matter to assigned games (new pending runs, bans, appeals). Later feeds can include anomaly alerts from stats below.
+- **Medium:** Moderator discussion board — general-purpose talk among mods, not appeal correspondence (that stays the appeal stub).
+- **Long / low:** Visualizations and stats on runs (time distributions, progression over submitted_at). Could illustrate getting faster over time, or flag incongruous jumps in a runner’s times as suspicious — those flags would notify moderators, not auto-reject. Not anti-cheat product in this take-home.
 - Player profile pages: list any runs by that runner (all games/categories, not only the current board).
 - Moderator home dashboard: links to assigned games and a pending queue across those games. The games list already marks assignments; this would be a dedicated landing page.
 - Assignment matrix: who is assigned to which games, filterable by moderator or by game.

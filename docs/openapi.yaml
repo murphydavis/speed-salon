@@ -85,7 +85,7 @@ paths:
             type: boolean
       responses:
         "200":
-          description: Ranked eligible runs with submittedAt, isPb, playerPlace, and runPlace (1-3 = global fastest eligible runs)
+          description: Ranked eligible runs with submittedAt, isPb, playerPlace (medals 1-3 on that PB), and runPlace
         "401":
           $ref: "#/components/responses/Error"
         "403":
