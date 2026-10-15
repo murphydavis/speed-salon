@@ -38,7 +38,8 @@ export async function listLeaderboard(
          SELECT DISTINCT ON (r.runner_id)
            r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
            r.runner_id AS "runnerId", rn.name AS "runnerName",
-           'ranked'::text AS kind
+           'ranked'::text AS kind,
+           true AS "isPb"
          FROM runs r
          JOIN runners rn ON rn.id = r.runner_id
          WHERE r.category_id = $1 AND ${ELIGIBLE} AND ${RUNNER_FILTER}
@@ -59,18 +60,55 @@ export async function listLeaderboard(
     [categoryId, search],
   );
   const result = await pool.query<LeaderboardRow>(
-    `SELECT
-       r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
-       r.runner_id AS "runnerId", rn.name AS "runnerName",
-       'ranked'::text AS kind
-     FROM runs r
-     JOIN runners rn ON rn.id = r.runner_id
-     WHERE r.category_id = $1 AND ${ELIGIBLE} AND ${RUNNER_FILTER}
-     ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC
+    `SELECT * FROM (
+       SELECT
+         r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
+         r.runner_id AS "runnerId", rn.name AS "runnerName",
+         'ranked'::text AS kind,
+         ROW_NUMBER() OVER (
+           PARTITION BY r.runner_id
+           ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC
+         ) = 1 AS "isPb"
+       FROM runs r
+       JOIN runners rn ON rn.id = r.runner_id
+       WHERE r.category_id = $1 AND ${ELIGIBLE} AND ${RUNNER_FILTER}
+     ) ranked
+     ORDER BY ranked."timeMs" ASC, ranked."submittedAt" ASC, ranked.id ASC
      OFFSET $3 LIMIT $4`,
     [categoryId, search, offset, limit],
   );
   return { items: result.rows, total: Number(count.rows[0]?.n ?? 0) };
+}
+
+export async function listPlayerPlaces(
+  pool: Pool,
+  categoryId: string,
+  q: string | undefined,
+): Promise<Map<string, number>> {
+  const search = q?.trim() ? q.trim() : null;
+  const result = await pool.query<{ runnerId: string; playerPlace: string }>(
+    `SELECT "runnerId",
+            row_number() OVER (
+              ORDER BY "timeMs" ASC, "submittedAt" ASC, id ASC
+            )::text AS "playerPlace"
+     FROM (
+       SELECT DISTINCT ON (r.runner_id)
+         r.id,
+         r.time_ms AS "timeMs",
+         r.submitted_at AS "submittedAt",
+         r.runner_id AS "runnerId"
+       FROM runs r
+       JOIN runners rn ON rn.id = r.runner_id
+       WHERE r.category_id = $1 AND ${ELIGIBLE} AND ${RUNNER_FILTER}
+       ORDER BY r.runner_id, r.time_ms ASC, r.submitted_at ASC, r.id ASC
+     ) best`,
+    [categoryId, search],
+  );
+  const places = new Map<string, number>();
+  for (const row of result.rows) {
+    places.set(row.runnerId, Number(row.playerPlace));
+  }
+  return places;
 }
 
 export type LeaderboardKind = "ranked" | "pending" | "banned";
@@ -82,6 +120,7 @@ export type LeaderboardRow = {
   runnerId: string;
   runnerName: string;
   kind: LeaderboardKind;
+  isPb: boolean;
 };
 
 const ACTIVE_BAN = `
@@ -108,7 +147,8 @@ export async function listBoardExtras(
       `SELECT
          r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
          r.runner_id AS "runnerId", rn.name AS "runnerName",
-         'pending'::text AS kind
+         'pending'::text AS kind,
+         false AS "isPb"
        FROM runs r
        JOIN runners rn ON rn.id = r.runner_id
        WHERE r.category_id = $1 AND r.status = 'pending' AND ${RUNNER_FILTER}
@@ -125,7 +165,8 @@ export async function listBoardExtras(
            SELECT DISTINCT ON (r.runner_id)
              r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
              r.runner_id AS "runnerId", rn.name AS "runnerName",
-             'banned'::text AS kind
+             'banned'::text AS kind,
+             false AS "isPb"
            FROM runs r
            JOIN runners rn ON rn.id = r.runner_id
            WHERE r.category_id = $1 AND r.status = 'approved' AND ${ACTIVE_BAN}
@@ -142,7 +183,8 @@ export async function listBoardExtras(
         `SELECT
            r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
            r.runner_id AS "runnerId", rn.name AS "runnerName",
-           'banned'::text AS kind
+           'banned'::text AS kind,
+           false AS "isPb"
          FROM runs r
          JOIN runners rn ON rn.id = r.runner_id
          WHERE r.category_id = $1 AND r.status = 'approved' AND ${ACTIVE_BAN}

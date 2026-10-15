@@ -29,7 +29,7 @@ export function App() {
   const url = new URL(loc, "http://local.invalid");
   const parts = url.pathname.split("/").filter(Boolean);
 
-  let page = <HomePage />;
+  let page = <HomePage assignedGameIds={current?.assignedGameIds ?? []} />;
   if (parts[0] === "games" && parts[1]) {
     page = (
       <GamePage

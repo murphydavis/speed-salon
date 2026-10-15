@@ -64,6 +64,17 @@ tr.row-banned {
   background: #fecaca;
 }
 
+.assigned-game,
+.assigned-game a {
+  font-weight: 700;
+}
+
+.pb {
+  font-weight: 700;
+  font-size: 0.8em;
+  color: #0b4f8a;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

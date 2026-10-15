@@ -112,6 +112,10 @@ Durable shipping (CloudWatch, OpenSearch, a log vendor) waits on hosting choices
 
 `includePending` / `includeBanned` on the leaderboard reuse existing `runs` + `bans`. Ranked `total` / `place` / pagination stay eligible-only. Extra rows are capped at `limit` and mixed into the current page by time. Assigned-moderator header required when either flag is true.
 
+## 2026-10-15 — Board `submitted_at` stands in for completed-at
+
+Runs have no separate completed timestamp. The board shows `submitted_at` in that role. A real completed-at would be a schema change later.
+
 ## Open (resolve when implementing)
 
 - CSV: full matching set vs same page vs hard row cap.

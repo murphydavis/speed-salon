@@ -59,6 +59,7 @@ Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftov
 - Phase 2 leftover: ban/appeal mutations, CSV, set default category, remaining constitution tests
 - Phase 3 leftover: search/filter, CSV, ban/appeal UI, Compose `web`/`api` services
 - Appeal evidence storage (intentionally deferred; see data model stub)
+- Wishlist (not this assignment): player profiles; moderator dashboard of assigned games + pending queue — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
 
 ## What we would do next
 

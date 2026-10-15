@@ -6,6 +6,7 @@ Walking slice (in the test file):
 
 - [x] Leaderboard default mode is players; DashMain occupies one place
 - [x] Run mode lists multiple DashMain times
+- [x] Run mode marks only the runner’s best eligible run as PB
 - [x] Pending and rejected runs are absent from the board
 - [x] Active bans are absent; appeal-approved ban remains
 - [x] Lists are capped (`limit`)

@@ -10,3 +10,9 @@ export function formatWhen(value: string): string {
   if (Number.isNaN(d.getTime())) return value;
   return d.toISOString().replace("T", " ").replace("Z", " UTC");
 }
+
+export function formatSubmitted(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return `${d.toISOString().slice(0, 16).replace("T", " ")} UTC`;
+}

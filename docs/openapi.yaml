@@ -84,7 +84,7 @@ paths:
             type: boolean
       responses:
         "200":
-          description: Ranked eligible runs; extras mixed by time when flags are set
+          description: Ranked eligible runs with submittedAt and isPb; extras mixed by time when flags are set
         "401":
           $ref: "#/components/responses/Error"
         "403":

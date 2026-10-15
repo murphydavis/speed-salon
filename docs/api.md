@@ -12,7 +12,7 @@ Error body: `{ "status": number, "code": string, "message": string }`. Mutations
 | GET | `/games` | Paginated. Query: `page`, `limit`. |
 | GET | `/games/{gameId}` | Categories; resolved default board. |
 | GET | `/games/{gameId}/runs` | Query: `status` (required: `pending` \| `approved` \| `rejected`), `page`, `limit`. Non-approved lists need assignment. |
-| GET | `/games/{gameId}/leaderboard` | Query: `categoryId`, `mode`, `q`, `page`, `limit`, `includePending`, `includeBanned` (`true`/`1`). Extras have `place: null`. |
+| GET | `/games/{gameId}/leaderboard` | Query: `categoryId`, `mode`, `q`, `page`, `limit`, `includePending`, `includeBanned`. Rows include `submittedAt` and `isPb`. Extras have `place: null`. |
 | GET | `/runs/{runId}` | Splits, review events, active ban if any. |
 | POST | `/runs/{runId}/approval` | Pending → approved. Empty JSON object. |
 | POST | `/runs/{runId}/rejection` | Body `{ "reason", "comment" }`. |

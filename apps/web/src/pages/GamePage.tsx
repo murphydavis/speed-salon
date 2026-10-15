@@ -1,7 +1,7 @@
 import { RANKING_MODES, type RankingMode } from "@speed-salon/shared";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api.js";
-import { formatTime } from "../format.js";
+import { formatSubmitted, formatTime } from "../format.js";
 import { navigate } from "../nav.js";
 import type { GameDetail, LeaderboardPage } from "../types.js";
 
@@ -91,7 +91,11 @@ export function GamePage({
           Games
         </a>
       </p>
-      <h1>{game.name}</h1>
+      <h1>
+        {game.name}
+        {assigned ? " *" : ""}
+      </h1>
+      {assigned ? <p className="muted">You are assigned to this game.</p> : null}
       {!game.defaultIsExplicit ? (
         <p className="warn">
           No default category is set. Showing the first category by name ({activeCategory?.name}).
@@ -156,6 +160,7 @@ export function GamePage({
             <th>Place</th>
             <th>Runner</th>
             <th>Time</th>
+            <th>Submitted</th>
           </tr>
         </thead>
         <tbody>
@@ -166,6 +171,10 @@ export function GamePage({
             >
               <td>{row.place ?? "—"}</td>
               <td>
+                {row.runner.name}
+                {row.kind === "pending" ? " (pending)" : row.kind === "banned" ? " (banned)" : ""}
+              </td>
+              <td>
                 <a
                   href={`/runs/${row.runId}`}
                   onClick={(e) => {
@@ -173,11 +182,11 @@ export function GamePage({
                     navigate(`/runs/${row.runId}`);
                   }}
                 >
-                  {row.runner.name}
+                  {formatTime(row.timeMs)}
                 </a>
-                {row.kind === "pending" ? " (pending)" : row.kind === "banned" ? " (banned)" : ""}
+                {rankMark(mode, row)}
               </td>
-              <td>{formatTime(row.timeMs)}</td>
+              <td>{formatSubmitted(row.submittedAt)}</td>
             </tr>
           ))}
         </tbody>
@@ -185,4 +194,22 @@ export function GamePage({
       {board.items.length === 0 ? <p className="muted">No runs to show on this board.</p> : null}
     </>
   );
+}
+
+function rankMark(mode: RankingMode, row: { isPb: boolean; playerPlace: number | null }) {
+  const podium = row.playerPlace === 1 || row.playerPlace === 2 || row.playerPlace === 3;
+  if (podium && (mode === "players" || row.isPb)) {
+    const medal = row.playerPlace === 1 ? "🥇" : row.playerPlace === 2 ? "🥈" : "🥉";
+    const label = row.playerPlace === 1 ? "1st" : row.playerPlace === 2 ? "2nd" : "3rd";
+    return (
+      <span className="trophy" title={`Personal best · ${label}`}>
+        {" "}
+        {medal}
+      </span>
+    );
+  }
+  if (mode === "runs" && row.isPb) {
+    return <span className="pb"> PB</span>;
+  }
+  return null;
 }

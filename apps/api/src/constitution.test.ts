@@ -116,6 +116,19 @@ describe("leaderboard", () => {
     const dash = body.items.filter((row: { runner: { name: string } }) => row.runner.name === "DashMain");
     assert.ok(dash.length >= 8);
     assert.equal(body.items[0].runId, DASH_PB);
+    assert.equal(dash[0].isPb, true);
+    assert.equal(dash[0].playerPlace, 1);
+    assert.ok(dash.slice(1).every((row: { isPb: boolean }) => row.isPb === false));
+    const won = body.items.find(
+      (row: { runner: { name: string }; isPb: boolean }) =>
+        row.runner.name === "BannedAppealWon" && row.isPb,
+    );
+    assert.equal(won.playerPlace, 2);
+    const second = body.items.find(
+      (row: { runner: { name: string }; isPb: boolean }) =>
+        row.runner.name === "SecondPlace" && row.isPb,
+    );
+    assert.equal(second.playerPlace, 3);
   });
 });
 

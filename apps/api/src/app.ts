@@ -7,7 +7,7 @@ import {
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import { findModerator, isAssigned, listModerators } from "./db/moderators.js";
 import { getGame, listGames, resolveBoardCategoryId } from "./db/games.js";
-import { listBoardExtras, listLeaderboard } from "./db/leaderboard.js";
+import { listBoardExtras, listLeaderboard, listPlayerPlaces } from "./db/leaderboard.js";
 import type { Pool } from "./db/pool.js";
 import { approveRun, getRun, listGameRuns, rejectRun, runGameId } from "./db/runs.js";
 import { ApiError } from "./errors.js";
@@ -76,7 +76,10 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
     if (includePending || includeBanned) {
       await requireAssignedToGame(pool, req, req.params.gameId);
     }
-    const { items, total } = await listLeaderboard(pool, categoryId, mode, q, page, limit);
+    const [{ items, total }, playerPlaces] = await Promise.all([
+      listLeaderboard(pool, categoryId, mode, q, page, limit),
+      listPlayerPlaces(pool, categoryId, q),
+    ]);
     const extras =
       includePending || includeBanned
         ? await listBoardExtras(
@@ -96,6 +99,8 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
       timeMs: row.timeMs,
       submittedAt: row.submittedAt,
       kind: row.kind,
+      isPb: row.isPb,
+      playerPlace: playerPlaces.get(row.runnerId) ?? null,
       runner: { id: row.runnerId, name: row.runnerName },
     }));
     const rankedIds = new Set(ranked.map((row) => row.runId));
@@ -107,6 +112,8 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
         timeMs: row.timeMs,
         submittedAt: row.submittedAt,
         kind: row.kind,
+        isPb: row.isPb,
+        playerPlace: null,
         runner: { id: row.runnerId, name: row.runnerName },
       }));
     const merged = [...ranked, ...extraRows].sort((a, b) => {

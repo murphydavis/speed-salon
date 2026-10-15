@@ -89,6 +89,8 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 
 Not a phase until promoted here with a checkbox. **Wishlist** items are not assignment work unless they are moved up.
 
+- Player profile pages: list any runs by that runner (all games/categories, not only the current board).
+- Moderator home dashboard: links to assigned games and a pending queue across those games. The games list already marks assignments; this would be a dedicated landing page.
 - Durable API logs (ship JSONL off the box). Hosting (AWS vs elsewhere) is undecided; do not pick CloudWatch/ELK in this take-home. Local `logs/api.log` is enough for now; see [`decisions.md`](decisions.md).
 - Prisma or similar ORM (typed CRUD, generated client). Current persistence is `pg` + explicit SQL; see [`decisions.md`](decisions.md). Do not introduce an ORM during this take-home.
 - Appeal documents and correspondence (stubbed in [`data-model.md`](data-model.md))

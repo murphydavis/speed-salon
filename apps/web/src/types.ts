@@ -32,6 +32,8 @@ export type LeaderboardRow = {
   timeMs: number;
   submittedAt: string;
   kind: "ranked" | "pending" | "banned";
+  isPb: boolean;
+  playerPlace: number | null;
   runner: { id: string; name: string };
 };
 
