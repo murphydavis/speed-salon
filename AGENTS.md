@@ -20,7 +20,7 @@ Stack (fixed by the assignment): Node, Express, TypeScript, Postgres, React. Loc
 
 Do not implement behavior that violates these. If a requested feature conflicts, stop and update `docs/requirements.md` first.
 
-1. **Boards are game + category.** A game-only view uses that game’s **default category** (typically Any%). Assigned moderators may change the default. The game page can list and switch other categories.
+1. **Boards are categories of a game.** Each game has a nullable `default_category_id`. A game-only view uses that category, or if unset the first category by `name`, then `id`. Assigned moderators may set the default. The UI flags an unset default. Runs store `category_id` only — never a second `game_id`. The game page can list and switch other categories.
 2. **Many approved runs per runner per board are allowed.** Default ranking is **by player** (each runner’s best approved time). A toggle switches to **by run** (every approved run ranks independently; one runner may occupy many places).
 3. **Pending → approved | rejected** is the only status machine for submissions. Clients cannot PATCH status arbitrarily.
 4. **Reject** requires an **enumerated reason** *and* a **non-empty moderator comment**.
@@ -32,8 +32,10 @@ Do not implement behavior that violates these. If a requested feature conflicts,
 
 ## Documentation discipline
 
+- Describe the **current** system. Do not record discarded options, uncommitted experiments, or “we almost did B” unless Murphy asks to keep that justification.
+- Do not restate what schema or code already makes obvious. Comment and prose earn their keep only when they add a non-obvious constraint or tradeoff.
 - Behavior change ⇒ update the relevant file under `docs/` in the same commit when possible.
-- New architectural choice ⇒ add a dated entry in `docs/decisions.md`.
+- New architectural choice ⇒ add a dated entry in `docs/decisions.md` stating the choice. Extra justification only when the tradeoff is not obvious.
 - Unfinished work, stubs, and known breakage live in `README.md` (and may be cross-linked from requirements).
 - Build sequence and phase completion live in `docs/roadmap.md` (checkboxes). Completing a phase means checking it in the same change.
 - Do not skip, reorder, or add phases without updating the roadmap first. A **walking slice** across phases is allowed when `docs/roadmap.md` defines it — that is not “skipping.”
@@ -68,4 +70,4 @@ Commit messages say **why**. Do not commit `.env`, credentials, or generated `no
 
 ## Code is not started yet
 
-Application packages, Compose, and schema follow [`docs/roadmap.md`](docs/roadmap.md). Until a phase starts, do not invent a parallel structure — follow `docs/project-structure.md` and `docs/architecture.md`.
+Schema and fixture live in `db/`. Application packages follow [`docs/roadmap.md`](docs/roadmap.md). Do not invent a parallel structure — follow `docs/project-structure.md` and `docs/architecture.md`.

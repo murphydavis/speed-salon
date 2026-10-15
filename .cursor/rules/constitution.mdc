@@ -7,6 +7,6 @@ alwaysApply: true
 
 `AGENTS.md` is mandatory. Domain rules: `docs/requirements.md`. HTTP shapes: OpenAPI / resource list. Tests: executable examples. Build order: `docs/roadmap.md` (walking slice allowed). If those disagree, stop and surface the conflict.
 
-Do not add application code that violates `docs/requirements.md` (ranking modes, reject reason + comment, reversible bans with appeal state, header auth, no deletes for bans, pagination).
+Do not add application code that violates `docs/requirements.md` (ranking modes, reject reason + comment, reversible bans with appeal state, header auth, no deletes for bans, pagination, nullable game default category, no redundant game_id beside category_id).
 
 Do not invent a different repo layout than `docs/project-structure.md`. This is an initial platform attempt, not years of production polish. New architectural choices go in `docs/decisions.md`.

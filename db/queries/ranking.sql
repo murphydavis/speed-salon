@@ -1,0 +1,31 @@
+-- Intended leaderboard SQL for the API (tie-break: time_ms, submitted_at, id).
+-- Eligibility: approved + no active ban (appeal_state <> approved).
+
+-- Player mode (default): one row per runner, personal best on the board.
+-- SELECT ...
+-- FROM (
+--   SELECT DISTINCT ON (r.runner_id)
+--     r.*
+--   FROM runs r
+--   WHERE r.category_id = $board
+--     AND r.status = 'approved'
+--     AND NOT EXISTS (
+--       SELECT 1 FROM bans b
+--       WHERE b.runner_id = r.runner_id
+--         AND b.appeal_state <> 'approved'
+--     )
+--   ORDER BY r.runner_id, r.time_ms ASC, r.submitted_at ASC, r.id ASC
+-- ) best
+-- ORDER BY best.time_ms ASC, best.submitted_at ASC, best.id ASC;
+
+-- Run mode: every eligible run.
+-- SELECT r.*
+-- FROM runs r
+-- WHERE r.category_id = $board
+--   AND r.status = 'approved'
+--   AND NOT EXISTS (
+--     SELECT 1 FROM bans b
+--     WHERE b.runner_id = r.runner_id
+--       AND b.appeal_state <> 'approved'
+--   )
+-- ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC;

@@ -10,10 +10,9 @@ Volunteer moderators review speedrun submissions so leaderboards show legitimate
 
 ### Leaderboards
 
-- A **board** is uniquely **game + category** (example: Super Mario 64 / Any%).
-- Opening a **game** without a category uses that game’s **default category**.
-  - Seed data should typically default to a category named `Any%` where it exists.
-  - Moderators **assigned to the game** may change which category is the default.
+- A **board** is a **category** of a game (example: Super Mario 64 / Any%). Runs store only `category_id`.
+- Opening a game without a category uses `games.default_category_id` when set. If it is null, use the first category for that game ordered by `name`, then `id`.
+- Assigned moderators may set `default_category_id`. The game page indicates when none is set.
 - From the game page, the moderator can **list other categories** for that game and switch boards.
 - Runners may have **any number of approved runs** on a given board.
 - **Default ranking mode: players.** One row per eligible runner, ordered by that runner’s **best** (lowest) approved time on the board.

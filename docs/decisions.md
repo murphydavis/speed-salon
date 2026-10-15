@@ -12,7 +12,11 @@ One repo is enough for a Compose-based take-home. Shared types prevent status/re
 
 ## 2026-10-12 — Boards are game + category; game URL uses configurable default category
 
-Matches typical speedrun sites. Default is usually Any% but is **moderator-configurable** per game (assigned mods only). Category switch lives on the game page.
+A board is a category of a game. `games.default_category_id` is optional so a game can be inserted before any category. When null, the board is the first category by `name`, then `id`. Assigned mods may set the default; the game page shows when it is unset.
+
+## 2026-10-14 — Runs store category_id only
+
+Game is `categories.game_id`. Moderator ACL stays on `moderator_games.game_id`.
 
 ## 2026-10-12 — Dual ranking: players (default) vs runs (toggle)
 
@@ -56,10 +60,25 @@ v1 uses resource identifiers, standard verbs, JSON representations, and meaningf
 
 **Bulk (demo scale):** same shape, scaled to **a few hundred thousand runs**. Status mix roughly **~90% approved / ~7% pending / ~3% rejected** (order-of-magnitude, not a SLA). Runner activity is **skewed** (a few runners have many runs; most have few), not uniform. Games are few relative to runs. Load with `COPY` or batched inserts.
 
+## 2026-10-14 — Schema in `db/`; Compose init on empty volume
+
+SQL lives in `db/migrations` and `db/seed`, not inside `apps/api` yet (no Node app). Compose mounts those files into `docker-entrypoint-initdb.d`. They run **only on first volume create**. Schema changes later either bump a new init file (dev: `docker compose down -v`) or a real migrate command — choose when the API exists.
+
+No extra migrate image or ORM. Ranking SQL sketch: `db/queries/ranking.sql`.
+
+## 2026-10-14 — Tie-break is time_ms, then submitted_at, then run id
+
+After equal times, earlier submission ranks higher; remaining ties use `runs.id`. Same order in player-mode `DISTINCT ON` and run mode.
+
+## 2026-10-14 — Runner search uses `pg_trgm`
+
+GIN index on `runners.name` with `gin_trgm_ops` so `ILIKE` / similarity stay usable at bulk scale. No `citext`.
+
+## 2026-10-14 — Appeal submit is seed-and-event for now
+
+Fixture writes `appeal_submit` review events and `bans.appeal_state`. No runner-facing appeal UI. Moderator appeal decide can wait until that mutation is scheduled.
+
 ## Open (resolve when implementing)
 
-- Exact tie-break after `time_ms` (run id vs earlier submission).
 - CSV: full matching set vs same page vs hard row cap.
 - ORM vs `pg` + SQL for queries (lean: `pg` + SQL unless an ADR says otherwise).
-- Runner-name search: `ILIKE` vs trigram.
-- Whether `appeal_submit` is a moderator action in the UI or seed-only until the stub is expanded.

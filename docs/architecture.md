@@ -23,13 +23,13 @@ Header: X-Moderator-Id on API requests (set by web “act as” control)
 ## Request flow
 
 1. Web sends JSON to the API and includes `X-Moderator-Id`.
-2. API resolves the moderator. Mutations fail closed if identity is missing or the moderator is not assigned to the target game.
+2. API resolves the moderator. Mutations fail closed if identity is missing or the moderator is not assigned to the target **game** (`categories.game_id` via the run’s `category_id`, or the game being configured).
 3. Commands run in a **transaction**: update run/runner/ban **and** insert a `review_events` row.
 4. Queries for boards apply eligibility (`approved` + inactive ban) and either **player** aggregation (`DISTINCT ON` / grouped min time) or **run** listing, then paginate.
 
 ## Auth model
 
-There is no session. The header *is* the identity. Seeded moderator UUIDs are documented in README after seed exists. This is an assignment allowance, not a production pattern — say so in the README.
+There is no session. The header *is* the identity. Seeded moderator UUIDs are in [`docs/fixture.md`](fixture.md). This is an assignment allowance, not a production pattern.
 
 ## CSV
 
@@ -39,10 +39,10 @@ CSV is generated **on the API** from the same query parameters as the HTML table
 
 Two loads, both using bulk SQL (`COPY` or batched inserts), never hundreds of thousands of ORM `save()` calls:
 
-- **Fixture** — small, deterministic, for tests and the walking slice
-- **Bulk** — on the order of a few hundred thousand runs, for the “feels real” demo
+- **Fixture** — `db/seed/001_fixture.sql`, applied on first Compose init. IDs: [`docs/fixture.md`](fixture.md)
+- **Bulk** — not implemented yet; same shape, scaled (see `docs/decisions.md`)
 
-Distribution and commands are in `docs/decisions.md`.
+Compose service `db` is Postgres 16. Init files run only on an empty volume.
 
 ## HTTP (v1)
 

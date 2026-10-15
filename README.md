@@ -4,17 +4,25 @@ Moderator console for a speedrunning website: leaderboards by **game + category*
 
 This repository is a take-home for a senior full-stack role (Node / Express / TypeScript / Postgres / React). It is an **initial best attempt** at the platform, not a years-polished production tool. The prompt’s ~2 hours is a scope hint. It is designed to run locally with Docker Compose once the runtime is added.
 
-**You are here:** documentation and repository outline only. There is no application yet. Start with `AGENTS.md`, `docs/requirements.md`, and [`docs/roadmap.md`](docs/roadmap.md).
+**You are here:** Postgres schema + fixture seed. API and web are not started. Start with `AGENTS.md`, `docs/requirements.md`, [`docs/roadmap.md`](docs/roadmap.md), and [`docs/fixture.md`](docs/fixture.md).
 
 ## How to run
 
-Not available until Compose and apps exist. The intended command is:
+Prerequisites: Docker. Copy `.env.example` to `.env` if you want to override defaults.
 
 ```bash
-docker compose up
+docker compose up db
 ```
 
-Prerequisites will be: Docker, and no extra hosted services.
+Wait until healthy, then (optional) inspect:
+
+```bash
+docker compose exec db psql -U speedsalon -d speedsalon -c "SELECT count(*) FROM runs;"
+```
+
+Init SQL runs only on a **new** volume. To re-seed: `docker compose down -v` then `up` again.
+
+Full `docker compose up` (api + web) is not wired yet.
 
 ## Repository layout
 
@@ -24,7 +32,7 @@ See [`docs/project-structure.md`](docs/project-structure.md). In short: `apps/ap
 
 Full record: [`docs/decisions.md`](docs/decisions.md).
 
-- Boards are **game + category**. A game view uses a **moderator-configurable default category** (typically Any%).
+- A board is a **category**. `games.default_category_id` may be null (fallback: first category by name). Runs store `category_id` only.
 - Runners may have many approved runs on one board. Default ranking is **by player (best run)**; a toggle ranks **by run**.
 - Reject requires an **enumerated reason** and a **non-empty comment**.
 - Bans are not deletes. Appeal state is stored (`not_appealed` | `pending` | `rejected` | `approved`). Approved appeals leave the ban row **inactive**. Documents/correspondence are **stubbed**, not built.
@@ -36,14 +44,14 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 
 Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftovers:
 
-- Phase 1: Postgres schema, indexes, migrations, fixture + bulk seed
+- Phase 1 leftover: **bulk seed** (hundreds of thousands of runs)
 - Phase 2: Resource list / growing OpenAPI, constitution tests, Express implementation
 - Phase 3: Walking-slice UI then remaining screens / Compose demo
 - Appeal evidence storage (intentionally deferred; see data model stub)
 
 ## What we would do next
 
-Current work: **phase 1 (Postgres)** as the base of the walking slice — see [`docs/roadmap.md`](docs/roadmap.md).
+Next: **phase 2 walking slice** — resource list, constitution tests, Express — see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Maintaining this project
 

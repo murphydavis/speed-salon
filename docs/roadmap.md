@@ -38,10 +38,10 @@ Resolution is an explicit decision: change the code, change the docs, or both.
 
 Design and implement the database to match [`data-model.md`](data-model.md).
 
-- [ ] Schema: tables, constraints, enums/checks, foreign keys needed for the walking slice (full model in `data-model.md`; do not invent extra tables)
-- [ ] Indexes required for leaderboard and seed scale
-- [ ] Migrations (or equivalent versioned SQL) wired so a fresh Compose Postgres comes up empty then migrates
-- [ ] **Fixture seed** — small, deterministic, fast; enough to prove player vs run ranking, reject/approve, ACL-relevant assignments, and every appeal state
+- [x] Schema: tables, constraints, enums/checks, foreign keys needed for the walking slice (full model in `data-model.md`; do not invent extra tables) (2026-10-14)
+- [x] Indexes required for leaderboard and seed scale (2026-10-14)
+- [x] Migrations (or equivalent versioned SQL) wired so a fresh Compose Postgres comes up empty then migrates (2026-10-14)
+- [x] **Fixture seed** — small, deterministic, fast; enough to prove player vs run ranking, reject/approve, ACL-relevant assignments, and every appeal state (2026-10-14)
 - [ ] **Bulk seed** — on the order of a few hundred thousand runs, via `COPY` / batched insert, using the distribution in [`decisions.md`](decisions.md)
 
 Compose Postgres belongs here so the schema has a place to live. Full `docker compose up` of api + web can wait until those apps exist, except as needed for the walking slice.
