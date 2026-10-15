@@ -4,11 +4,15 @@ This file is the source of truth for how work is done. Documentation in `docs/` 
 
 If code and docs disagree, **stop and surface the conflict** — do not pick a silent winner. Resolution is an explicit decision: change the implementation, change the documentation, or both, in the same change. Silent drift is a defect.
 
+Canonical roles: `docs/requirements.md` = domain rules; OpenAPI (or the short resource list) = HTTP shapes; tests = executable examples. Do not duplicate the same rule in three incompatible wordings.
+
 A future engineer with no AI must be able to continue from these files alone.
 
 ## Identity
 
 Speed Salon is a **moderator console** for a speedrunning site: leaderboards, run review, bans, and audit history. It is not a runner-facing submission product in this take-home.
+
+This is an **initial best attempt** at the platform (cloneable, domain-correct, documented leftovers), not a production system perfected over years. The prompt’s “about 2 hours” is a **scope hint**, not a hard elapsed-time limit.
 
 Stack (fixed by the assignment): Node, Express, TypeScript, Postgres, React. Local run: `docker compose up`.
 
@@ -32,13 +36,13 @@ Do not implement behavior that violates these. If a requested feature conflicts,
 - New architectural choice ⇒ add a dated entry in `docs/decisions.md`.
 - Unfinished work, stubs, and known breakage live in `README.md` (and may be cross-linked from requirements).
 - Build sequence and phase completion live in `docs/roadmap.md` (checkboxes). Completing a phase means checking it in the same change.
-- Do not skip, reorder, or add phases without updating the roadmap first.
+- Do not skip, reorder, or add phases without updating the roadmap first. A **walking slice** across phases is allowed when `docs/roadmap.md` defines it — that is not “skipping.”
 - Do not leave “the model knows” as the only record of a decision.
 
 ## Engineering standards
 
 - TypeScript **strict**. Shared vocabulary (statuses, header name, DTO shapes, reject reasons, ranking mode) lives in `packages/shared` once code exists — API and web must not fork string unions.
-- Prefer **explicit SQL** (or a thin query layer) for leaderboard and seed paths. Do not hide ranking semantics inside an ORM convenience that cannot use the indexes.
+- Prefer **explicit SQL** (or a thin query layer) for leaderboard and seed paths. Do not hide ranking semantics inside an ORM convenience that cannot use the indexes. Persistence modules stay thin; no generic repository forest.
 - Validate mutations on the **server**. The UI may hide illegal actions; the API still enforces them.
 - Fail with **typed, structured errors** (status, code, message). Do not return raw stack traces to the client.
 - No secrets in git. Compose and `.env.example` document required variables; real `.env` is gitignored.
@@ -56,10 +60,10 @@ Commit messages say **why**. Do not commit `.env`, credentials, or generated `no
 ## How to work in this repo
 
 1. Read `README.md`, this file, `docs/requirements.md`, and `docs/roadmap.md` before changing behavior.
-2. Work the current open phase. Do not implement a later phase “while we’re here.”
+2. Prefer the current phase, but take the **walking slice** (schema + fixture → a few API tests → crude UI) as soon as the previous layer can support it. Do not block the demo on a complete spec or bulk seed.
 3. If the change is product, architecture, or sequence, write or update docs first.
 4. If you hit a conflict between docs, tests, spec, and code, stop and ask — then record the decision.
-5. Implement the smallest slice that preserves the rules above.
+5. Tests: keep a list of constitution cases; implement **one failing test at a time**. Do not author an entire red suite before a server exists.
 6. Note leftovers in `README.md` rather than pretending they shipped. Check the matching roadmap box when a phase is actually done.
 
 ## Code is not started yet

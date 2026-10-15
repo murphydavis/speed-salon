@@ -37,7 +37,16 @@ CSV is generated **on the API** from the same query parameters as the HTML table
 
 ## Seed
 
-Seed is a **bulk load** (Postgres `COPY` or batched inserts), not hundreds of thousands of ORM `save()` calls. It may run as a Compose command or an API/bootstrap script; the choice belongs in `docs/decisions.md` when implemented.
+Two loads, both using bulk SQL (`COPY` or batched inserts), never hundreds of thousands of ORM `save()` calls:
+
+- **Fixture** — small, deterministic, for tests and the walking slice
+- **Bulk** — on the order of a few hundred thousand runs, for the “feels real” demo
+
+Distribution and commands are in `docs/decisions.md`.
+
+## HTTP (v1)
+
+Resource URLs, standard verbs, typed errors, pagination. Optional `next` link on lists. No HATEOAS graph in v1.
 
 ## What is intentionally not here
 

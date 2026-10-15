@@ -2,7 +2,7 @@
 
 Moderator console for a speedrunning website: leaderboards by **game + category**, run review, reversible bans, and an audit trail.
 
-This repository is a take-home for a senior full-stack role (Node / Express / TypeScript / Postgres / React). It is designed to run locally with Docker Compose once the runtime is added.
+This repository is a take-home for a senior full-stack role (Node / Express / TypeScript / Postgres / React). It is an **initial best attempt** at the platform, not a years-polished production tool. The prompt’s ~2 hours is a scope hint. It is designed to run locally with Docker Compose once the runtime is added.
 
 **You are here:** documentation and repository outline only. There is no application yet. Start with `AGENTS.md`, `docs/requirements.md`, and [`docs/roadmap.md`](docs/roadmap.md).
 
@@ -29,20 +29,21 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 - Reject requires an **enumerated reason** and a **non-empty comment**.
 - Bans are not deletes. Appeal state is stored (`not_appealed` | `pending` | `rejected` | `approved`). Approved appeals leave the ban row **inactive**. Documents/correspondence are **stubbed**, not built.
 - Current moderator is `X-Moderator-Id`. Mutations are scoped to assigned games.
-- Seed target: on the order of **hundreds of thousands** of runs.
+- Two seeds: small **fixture** for tests; **bulk** on the order of hundreds of thousands of runs.
+- REST v1 is resource HTTP (verbs, statuses), not a hypermedia graph.
 
 ## Unfinished / not started
 
 Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftovers:
 
-- Phase 1: Postgres schema, indexes, migrations, seed tool
-- Phase 2: OpenAPI (or equivalent spec), API tests, Express implementation
-- Phase 3: React UI and full Compose demo
+- Phase 1: Postgres schema, indexes, migrations, fixture + bulk seed
+- Phase 2: Resource list / growing OpenAPI, constitution tests, Express implementation
+- Phase 3: Walking-slice UI then remaining screens / Compose demo
 - Appeal evidence storage (intentionally deferred; see data model stub)
 
 ## What we would do next
 
-Current phase is **1. Postgres data model** — see [`docs/roadmap.md`](docs/roadmap.md).
+Current work: **phase 1 (Postgres)** as the base of the walking slice — see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Maintaining this project
 

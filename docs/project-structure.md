@@ -44,4 +44,4 @@ These are the intended entry points, not created yet:
 - `apps/web/src/App.tsx` (or router root) — game page + ranking toggle
 - `packages/shared/src/index.ts` — `RunStatus`, `RejectReason`, `RankingMode`, `AppealState`, `MODERATOR_HEADER`
 
-Build order is [`docs/roadmap.md`](roadmap.md). Best first **code** after docs: schema + bulk seed (phase 1).
+Build order is [`docs/roadmap.md`](roadmap.md). Best first **code** after docs: schema + **fixture** seed (phase 1); bulk seed can follow without blocking the walking slice.

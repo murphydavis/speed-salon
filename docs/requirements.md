@@ -77,7 +77,9 @@ Adding a reason is a product change: update this table, `packages/shared`, and t
 
 ### Seed data
 
-- Enough fake data to feel like a real site: **on the order of a few hundred thousand runs**, multiple games, multiple categories per game, many runners, mixed pending/approved/rejected, at least one banned runner in each appeal state, review history on a sample of runs, and moderators who are **not** assigned to every game.
+- **Fixture seed:** small and deterministic. Must include everything the walking slice and constitution tests need (player vs run ranking with a dominant runner, pending/approved/rejected, each ban appeal state, split review history, mods not assigned to every game).
+- **Bulk seed:** enough fake data to feel like a real site: **on the order of a few hundred thousand runs**, multiple games, multiple categories per game, many runners, mixed statuses. Same invariants as the fixture, scaled. Skew is specified in `docs/decisions.md`.
+- Tests run against the fixture (or a migration-only empty DB plus fixture). Tests must not require the bulk load.
 
 ## Out of scope (defer; note in README)
 
@@ -102,4 +104,4 @@ When Compose is eventually wired, a reviewer should be able to:
 6. As a scoped moderator, approve a pending run and reject another with reason + comment; as a moderator for a different game, those mutations fail.
 7. Ban a runner (times leave boards), see appeal state, approve an appeal (times return, ban row still visible as inactive).
 
-Items not reached in the time box stay in `README.md` as unfinished — do not fake them.
+Items not reached in this **initial attempt** stay in `README.md` as unfinished — do not fake them. The assignment’s two-hour note is a scope hint, not a requirement to stop the clock.
