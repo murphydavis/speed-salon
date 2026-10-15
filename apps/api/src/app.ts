@@ -35,7 +35,9 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
   app.get("/games", asyncHandler(async (req, res) => {
     const page = parsePage(req.query.page);
     const limit = parseLimit(req.query.limit);
-    const { items, total } = await listGames(pool, page, limit);
+    const qRaw = typeof req.query.q === "string" ? req.query.q : undefined;
+    const q = qRaw?.trim() ? qRaw.trim() : undefined;
+    const { items, total } = await listGames(pool, page, limit, q);
     res.json({ page, limit, total, items, next: nextLink(req.path, page, limit, total, req.query) });
   }));
 

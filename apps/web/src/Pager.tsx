@@ -5,11 +5,13 @@ export function Pager({
   limit,
   total,
   onPage,
+  unit,
 }: {
   page: number;
   limit: number;
   total: number;
   onPage: (page: number) => void;
+  unit: string;
 }) {
   const last = Math.max(1, Math.ceil(total / Math.max(limit, 1)));
   const [draft, setDraft] = useState(String(page));
@@ -50,7 +52,7 @@ export function Pager({
         <button type="submit">Go</button>
       </form>
       <span className="muted">
-        of {last} · {total} rows
+        of {last} · {total} {unit}
       </span>
       <button type="button" disabled={page >= last} onClick={() => go(page + 1)}>
         Next

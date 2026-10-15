@@ -11,6 +11,10 @@ export type Game = {
   name: string;
   slug: string;
   defaultCategoryId: string | null;
+  totalRuns?: number;
+  approvedRuns?: number;
+  pendingRuns?: number;
+  bannedRuns?: number;
 };
 
 export type Category = {
@@ -18,6 +22,10 @@ export type Category = {
   gameId: string;
   name: string;
   slug: string;
+  totalRuns?: number;
+  approvedRuns?: number;
+  pendingRuns?: number;
+  bannedRuns?: number;
 };
 
 export type GameDetail = Game & {

@@ -1,5 +1,5 @@
 -- Optional demo-scale load. Not applied on Compose init.
--- ~200000 runs on games that are not the fixture boards.
+-- ~200000 runs on bulk games, then pad so every category has ≥50 non-rejected runs.
 -- Every table ends with ≥20 rows. Bulk Demo Any% has >10000 eligible approved runs.
 -- Catalog: docs/fixture.md. Distribution: docs/decisions.md.
 
@@ -301,5 +301,49 @@ FROM generate_series(1, 8) AS s(i)
 JOIN categories c
   ON c.game_id = ('00000000-0000-4000-b000-' || lpad(i::text, 12, '0'))::uuid
  AND c.slug = 'any';
+
+-- Every category ≥50 non-rejected runs (board view with pending+banned).
+-- Filler mix: 32 approved / 14 pending / 6 banned. Slow times keep fixture podiums.
+INSERT INTO runs (
+  id, runner_id, category_id, status, time_ms, submitted_at, proof_url
+)
+SELECT
+  ('00000000-0000-4000-b500-' || lpad((400000 + cat.n * 100 + slot.i)::text, 12, '0'))::uuid,
+  r.runner_id,
+  cat.id,
+  CASE
+    WHEN slot.i <= 32 THEN 'approved'::run_status
+    WHEN slot.i <= 46 THEN 'pending'::run_status
+    ELSE 'approved'::run_status
+  END,
+  5000000 + slot.i * 1000,
+  timestamptz '2024-06-01 00:00:00+00' + make_interval(secs => cat.n * 100 + slot.i),
+  'https://example.invalid/bulk/pad/' || cat.n || '/' || slot.i
+FROM (
+  SELECT
+    c.id,
+    row_number() OVER (ORDER BY c.id) AS n,
+    (
+      SELECT count(*)
+      FROM runs r
+      WHERE r.category_id = c.id AND r.status <> 'rejected'
+    ) AS visible
+  FROM categories c
+) cat
+JOIN LATERAL generate_series(1, 50 - cat.visible::int) AS slot(i) ON cat.visible < 50
+CROSS JOIN LATERAL (
+  SELECT CASE
+    WHEN slot.i <= 32 THEN
+      ('00000000-0000-4000-b300-' || lpad((7800 + slot.i)::text, 12, '0'))::uuid
+    WHEN slot.i <= 46 THEN
+      ('00000000-0000-4000-b300-' || lpad((7820 + slot.i)::text, 12, '0'))::uuid
+    ELSE
+      ('00000000-0000-4000-b300-' || lpad(
+        ((ARRAY[7960, 7961, 7962, 7964, 7965, 7966])[slot.i - 46])::text,
+        12,
+        '0'
+      ))::uuid
+  END AS runner_id
+) r;
 
 COMMIT;

@@ -82,6 +82,7 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 - [x] Category switch on the game page (2026-10-15; API already had `categoryId`)
 - [x] Remaining requirements: search, CSV, set default, ban/appeal visibility and actions (2026-10-15)
 - [x] List pagination in the UI: first / previous / next / last and a page field (2026-10-15)
+- [x] Games list: name search and total / approved / pending / banned run counts (2026-10-15)
 - [ ] Compose includes `web` so `docker compose up` is the full local demo
 
 ---
@@ -90,6 +91,7 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 
 Not a phase until promoted here with a checkbox. **Wishlist** items are not assignment work unless they are moved up.
 
+- **Near / easy:** Click-to-sort columns on the games list (name, counts) and on the board (place, runner, time, submitted). Short-term win; not built yet.
 - **Near:** Moderator notifications (in-app). Queue for review events that matter to assigned games (new pending runs, bans, appeals). Later feeds can include anomaly alerts from stats below.
 - **Medium:** Moderator discussion board — general-purpose talk among mods, not appeal correspondence (that stays the appeal stub).
 - **Long / low:** Visualizations and stats on runs (time distributions, progression over submitted_at). Could illustrate getting faster over time, or flag incongruous jumps in a runner’s times as suspicious — those flags would notify moderators, not auto-reject. Not anti-cheat product in this take-home.

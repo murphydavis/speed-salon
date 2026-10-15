@@ -1,19 +1,59 @@
 import { notFound } from "../errors.js";
 import type { Pool, PoolClient } from "./pool.js";
 
+const ACTIVE_BAN = `
+  EXISTS (
+    SELECT 1 FROM bans b
+    WHERE b.runner_id = r.runner_id
+      AND b.appeal_state <> 'approved'
+  )
+`;
+
 export async function listGames(
   pool: Pool,
   page: number,
   limit: number,
-): Promise<{ items: GameRow[]; total: number }> {
-  const count = await pool.query<{ n: string }>("SELECT count(*)::text AS n FROM games");
+  q?: string,
+): Promise<{ items: GameListRow[]; total: number }> {
+  const search = q?.trim() ? q.trim() : null;
+  const nameFilter = `( $1::text IS NULL OR g.name ILIKE '%' || $1 || '%' )`;
+  const count = await pool.query<{ n: string }>(
+    `SELECT count(*)::text AS n FROM games g WHERE ${nameFilter}`,
+    [search],
+  );
   const total = Number(count.rows[0]?.n ?? 0);
-  const result = await pool.query<GameRow>(
-    `SELECT id, name, slug, default_category_id AS "defaultCategoryId"
-     FROM games
-     ORDER BY name ASC, id ASC
-     OFFSET $1 LIMIT $2`,
-    [(page - 1) * limit, limit],
+  const result = await pool.query<GameListRow>(
+    `SELECT
+       g.id,
+       g.name,
+       g.slug,
+       g.default_category_id AS "defaultCategoryId",
+       coalesce(s.total, 0)::int AS "totalRuns",
+       coalesce(s.approved, 0)::int AS "approvedRuns",
+       coalesce(s.pending, 0)::int AS "pendingRuns",
+       coalesce(s.banned, 0)::int AS "bannedRuns"
+     FROM games g
+     LEFT JOIN (
+       SELECT
+         c.game_id,
+         count(*) AS total,
+         count(*) FILTER (
+           WHERE r.status = 'approved' AND NOT ${ACTIVE_BAN}
+         ) AS approved,
+         count(*) FILTER (
+           WHERE r.status = 'pending'
+         ) AS pending,
+         count(*) FILTER (
+           WHERE r.status = 'approved' AND ${ACTIVE_BAN}
+         ) AS banned
+       FROM categories c
+       JOIN runs r ON r.category_id = c.id
+       GROUP BY c.game_id
+     ) s ON s.game_id = g.id
+     WHERE ${nameFilter}
+     ORDER BY g.name ASC, g.id ASC
+     OFFSET $2 LIMIT $3`,
+    [search, (page - 1) * limit, limit],
   );
   return { items: result.rows, total };
 }
@@ -25,16 +65,59 @@ export async function getGame(pool: Pool, gameId: string): Promise<GameDetail> {
     [gameId],
   );
   if (!game.rows[0]) throw notFound("game");
-  const categories = await pool.query<CategoryRow>(
-    `SELECT id, game_id AS "gameId", name, slug
-     FROM categories WHERE game_id = $1
-     ORDER BY name ASC, id ASC`,
-    [gameId],
-  );
+  const [categories, counts] = await Promise.all([
+    pool.query<CategoryRow>(
+      `SELECT
+         c.id,
+         c.game_id AS "gameId",
+         c.name,
+         c.slug,
+         count(r.id)::int AS "totalRuns",
+         count(r.id) FILTER (
+           WHERE r.status = 'approved' AND NOT ${ACTIVE_BAN}
+         )::int AS "approvedRuns",
+         count(r.id) FILTER (
+           WHERE r.status = 'pending'
+         )::int AS "pendingRuns",
+         count(r.id) FILTER (
+           WHERE r.status = 'approved' AND ${ACTIVE_BAN}
+         )::int AS "bannedRuns"
+       FROM categories c
+       LEFT JOIN runs r ON r.category_id = c.id
+       WHERE c.game_id = $1
+       GROUP BY c.id
+       ORDER BY c.name ASC, c.id ASC`,
+      [gameId],
+    ),
+    pool.query<GameRunCounts>(
+      `SELECT
+         count(*)::int AS "totalRuns",
+         count(*) FILTER (
+           WHERE r.status = 'approved' AND NOT ${ACTIVE_BAN}
+         )::int AS "approvedRuns",
+         count(*) FILTER (
+           WHERE r.status = 'pending'
+         )::int AS "pendingRuns",
+         count(*) FILTER (
+           WHERE r.status = 'approved' AND ${ACTIVE_BAN}
+         )::int AS "bannedRuns"
+       FROM categories c
+       JOIN runs r ON r.category_id = c.id
+       WHERE c.game_id = $1`,
+      [gameId],
+    ),
+  ]);
   const resolvedDefaultCategoryId =
     game.rows[0].defaultCategoryId ?? categories.rows[0]?.id ?? null;
+  const runCounts = counts.rows[0] ?? {
+    totalRuns: 0,
+    approvedRuns: 0,
+    pendingRuns: 0,
+    bannedRuns: 0,
+  };
   return {
     ...game.rows[0],
+    ...runCounts,
     categories: categories.rows,
     resolvedDefaultCategoryId,
     defaultIsExplicit: game.rows[0].defaultCategoryId !== null,
@@ -87,15 +170,25 @@ export type GameRow = {
   defaultCategoryId: string | null;
 };
 
+export type GameRunCounts = {
+  totalRuns: number;
+  approvedRuns: number;
+  pendingRuns: number;
+  bannedRuns: number;
+};
+
+export type GameListRow = GameRow & GameRunCounts;
+
 export type CategoryRow = {
   id: string;
   gameId: string;
   name: string;
   slug: string;
-};
+} & GameRunCounts;
 
-export type GameDetail = GameRow & {
-  categories: CategoryRow[];
-  resolvedDefaultCategoryId: string | null;
-  defaultIsExplicit: boolean;
-};
+export type GameDetail = GameRow &
+  GameRunCounts & {
+    categories: CategoryRow[];
+    resolvedDefaultCategoryId: string | null;
+    defaultIsExplicit: boolean;
+  };

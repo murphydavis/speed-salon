@@ -126,6 +126,10 @@ export function GamePage({
       <p>
         Board: <strong>{activeCategory?.name}</strong>
       </p>
+      <p>
+        Total {activeCategory?.totalRuns ?? 0} · Approved {activeCategory?.approvedRuns ?? 0} ·
+        Pending {activeCategory?.pendingRuns ?? 0} · Banned {activeCategory?.bannedRuns ?? 0}
+      </p>
       <div className="row-btns">
         {game.categories.map((c) => (
           <button
@@ -245,7 +249,7 @@ export function GamePage({
       </div>
       {ignoreMaxRows ? (
         <p className="muted">
-          Uncapped export skips the 10 000-row cap. It may still time out or fail on a large board.
+          Uncapped export skips the 10 000-run cap. It may still time out or fail on a large board.
         </p>
       ) : null}
 
@@ -312,6 +316,7 @@ export function GamePage({
         page={board.page}
         limit={board.limit}
         total={board.total}
+        unit="runs"
         onPage={(n) => setQuery({ page: n })}
       />
     </>

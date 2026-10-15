@@ -8,6 +8,12 @@ Volunteer moderators review speedrun submissions so leaderboards show legitimate
 
 ## In scope
 
+### Games list
+
+- The home page lists games. Search by **game name** (optional; empty search is the full list). Pagination starts on page 1; a new search returns to page 1.
+- Each game shows **total** runs (every status) plus **approved** (eligible: approved and no active ban), **pending**, and **banned** (approved with an active ban), all summed across every category of that game.
+- On a game page, those four counts are for the **active category** and sit under the board name. Switching boards updates them.
+
 ### Leaderboards
 
 - A **board** is a **category** of a game (example: Super Mario 64 / Any%). Runs store only `category_id`.
@@ -15,14 +21,14 @@ Volunteer moderators review speedrun submissions so leaderboards show legitimate
 - Assigned moderators may set `default_category_id`. The game page indicates when none is set.
 - From the game page, the moderator can **list other categories** for that game and switch boards.
 - Runners may have **any number of approved runs** on a given board.
-- **Default ranking mode: players.** One row per eligible runner, ordered by that runner’s **best** (lowest) approved time on the board.
-- **Alternate ranking mode: runs.** Every eligible approved run is a row. One runner may occupy many consecutive places (including an entire top 10). That runner’s best eligible run is marked **PB**.
+- **Default ranking mode: players.** One place per eligible runner, ordered by that runner’s **best** (lowest) approved time on the board.
+- **Alternate ranking mode: runs.** Every eligible approved run is listed. One runner may occupy many consecutive places (including an entire top 10). That runner’s best eligible run is marked **PB**.
 - Gold / silver / bronze follow the **player** ladder (rank-by-players), like Olympic medals: one medal per athlete. They go on that runner’s **PB** even in rank-by-runs. A dominant runner’s 2nd- and 3rd-fastest times are not silver and bronze. Pending and banned extras never get medals.
 - The ranking mode is a **toggle on the current view**, not a separate product.
-- Each board row shows **submitted_at** (treated as completed-at until a separate completed timestamp exists). The **time** is the link to the run; the runner name is not a profile link.
+- Each board run shows **submitted_at** (treated as completed-at until a separate completed timestamp exists). The **time** is the link to the run; the runner name is not a profile link.
 - Moderators can **filter** the current view, **search by runner name**, and **export the current view as CSV** (same ranking mode and include flags). Search is optional: **no search term exports the entire board** (still capped at 10 000 unless `ignoreMaxRows`). A non-empty search limits the export to matching runners. An optional flag **attempts** an uncapped export; that request may still fail on memory or timeout. Job-based export and object storage are wishlist.
 - Eligible for ranking: run `status = approved` **and** the runner’s current ban is **inactive**.
-- Assigned moderators of the game may toggle **pending** and **banned** runs onto the current board (same category, mixed in by time). Those rows have **no place**. Place numbers stay the eligible ranking only. When either flag is on, pagination **total** includes those extras (mixed by time with eligible rows). Toggling a flag returns to page 1. Unassigned or anonymous clients cannot include them. CSV filenames and columns record which include flags were on. The UI uses Show/Hide buttons, not checkboxes.
+- Assigned moderators of the game may toggle **pending** and **banned** runs onto the current board (same category, mixed in by time). Those runs have **no place**. Place numbers stay the eligible ranking only. When either flag is on, pagination **total** includes those extras (mixed by time with eligible runs). Toggling a flag returns to page 1. Unassigned or anonymous clients cannot include them. CSV filenames and columns record which include flags were on. The UI uses Show/Hide buttons, not checkboxes.
 - Olympic medals use **unfiltered** player-ladder places. A search that leaves only the 2nd-best player still shows **silver** on their PB.
 - Paginated lists in the UI (**games** and the **board**) start on **page 1**. Controls: first, previous, next, last, and a page-number field. Changing category, ranking mode, search, or include flags returns to page 1. The API `page` / `limit` contract is unchanged.
 
@@ -75,14 +81,14 @@ Adding a reason is a product change: update this table, `packages/shared`, and t
 
 - Current moderator is identified by header **`X-Moderator-Id`**.
 - Mutations (approve, reject, ban, unban, set default category, decide appeal) require that moderator to be **assigned to the run’s game** (or the game being configured).
-- Unknown or missing header on mutations → **401**. Assigned but wrong game → **403**. The same fail-closed rule applies to reads that expose pending or banned rows on a board.
-- Public board reads (eligible ranking only) do not require the header. The UI still hides actions and extra rows the header cannot perform.
+- Unknown or missing header on mutations → **401**. Assigned but wrong game → **403**. The same fail-closed rule applies to reads that expose pending or banned runs on a board.
+- Public board reads (eligible ranking only) do not require the header. The UI still hides actions and extra runs the header cannot perform.
 - A small **“act as moderator”** control in the web app that sets the header is allowed. It is not an authentication system.
 
 ### Seed data
 
 - **Fixture seed:** small and deterministic. Must include everything the walking slice and constitution tests need (player vs run ranking with a dominant runner, pending/approved/rejected, each ban appeal state, split review history, mods not assigned to every game).
-- **Bulk seed:** enough fake data to feel like a real site: **on the order of a few hundred thousand runs**, **at least 20 games**, multiple categories per game, many runners, mixed statuses. Same invariants as the fixture, scaled. Skew is specified in `docs/decisions.md`. **At least one board has more than 10 000 eligible approved runs**. After bulk, **no table has fewer than 20 rows** (≥20 moderators, ≥20 bans in every appeal state, multi-moderator games, etc.). Tests must not require this load.
+- **Bulk seed:** enough fake data to feel like a real site: **on the order of a few hundred thousand runs**, **at least 20 games**, multiple categories per game, many runners, mixed statuses. Same invariants as the fixture, scaled. Skew is specified in `docs/decisions.md`. **At least one board has more than 10 000 eligible approved runs**. After bulk, **no table has fewer than 20 rows** (≥20 moderators, ≥20 bans in every appeal state, multi-moderator games, etc.) and **every category has at least 50 non-rejected runs** (32 approved / 14 pending / 6 banned is an acceptable mix). Tests must not require this load.
 - Tests run against the fixture (or a migration-only empty DB plus fixture). Tests must not require the bulk load.
 
 ## Out of scope (defer; note in README)
@@ -106,6 +112,6 @@ When Compose is eventually wired, a reviewer should be able to:
 4. Search a runner by name and export CSV of the current view.
 5. Open a run and see splits + review history.
 6. As a scoped moderator, approve a pending run and reject another with reason + comment; as a moderator for a different game, those mutations fail.
-7. Ban a runner (times leave boards), see appeal state, approve an appeal (times return, ban row still visible as inactive).
+7. Ban a runner (times leave boards), see appeal state, approve an appeal (times return, ban record still visible as inactive).
 
 Items not reached in this **initial attempt** stay in `README.md` as unfinished — do not fake them. The assignment’s two-hour note is a scope hint, not a requirement to stop the clock.

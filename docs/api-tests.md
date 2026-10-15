@@ -17,6 +17,7 @@ Walking slice (in the test file):
 - [x] Reject already-rejected run → 409
 - [x] Alice can approve SM64 pending; review event appended
 - [x] Moderators list includes assignments
+- [x] Games list includes SM64 run counts (including totalRuns); `q=Mario` matches Super Mario 64; game detail repeats game-wide counts and per-category counts
 - [x] Game pending queue includes PendingPatty
 - [x] includePending without header → 401; wrong-game mod → 403
 - [x] Assigned mod can mix pending/banned; places stay eligible-only; total includes extras

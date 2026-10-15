@@ -37,7 +37,7 @@ Seed expects an empty schema (run reset first if data already exists). Optional 
 docker compose --profile tools run --rm db-seed-bulk
 ```
 
-Bulk Demo Any% (Alice): `00000000-0000-4000-b000-000000000001`. After bulk, every table has ≥20 rows. Reset drops it with the database. Changing bulk SQL requires reset + fixture + bulk.
+Bulk Demo Any% (Alice): `00000000-0000-4000-b000-000000000001`. After bulk, every table has ≥20 rows and every category has ≥50 non-rejected runs. Reset drops it with the database. Changing bulk SQL requires reset + fixture + bulk.
 
 ## Repository layout
 
@@ -50,13 +50,13 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 - A board is a **category**. `games.default_category_id` may be null (fallback: first category by name). Runs store `category_id` only.
 - Runners may have many approved runs on one board. Default ranking is **by player (best run)**; a toggle ranks **by run**.
 - Reject requires an **enumerated reason** and a **non-empty comment**.
-- Bans are not deletes. Appeal state is stored (`not_appealed` | `pending` | `rejected` | `approved`). Approved appeals leave the ban row **inactive**. Documents/correspondence are **stubbed**, not built.
+- Bans are not deletes. Appeal state is stored (`not_appealed` | `pending` | `rejected` | `approved`). Approved appeals leave the ban record **inactive**. Documents/correspondence are **stubbed**, not built.
 - Current moderator is `X-Moderator-Id`. Mutations are scoped to assigned games.
 - Two seeds: small **fixture** for tests; **bulk** on the order of hundreds of thousands of runs.
 - REST v1 is resource HTTP (verbs, statuses), not a hypermedia graph.
 - Persistence is **`pg` + SQL** (ranking and seed stay explicit). Prisma is wishlist, not this take-home.
 - API request log is local JSONL (`logs/api.log`). Durable shipping is wishlist.
-- CSV export is capped at 10 000 rows unless `ignoreMaxRows` is set (best-effort; may fail). Job-based export and object storage are wishlist.
+- CSV export is capped at 10 000 runs unless `ignoreMaxRows` is set (best-effort; may fail). Job-based export and object storage are wishlist.
 
 ## Unfinished / not started
 
@@ -65,7 +65,7 @@ Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftov
 - Phase 3 leftover: Compose `api`/`web` services
 - Search on the board is runner-name only (no extra filter chips beyond pending/banned toggles)
 - Appeal evidence storage (intentionally deferred; see data model stub)
-- Wishlist (not this assignment): near-term notifications; medium-term mod discussion board; long-term run stats/visualizations; player profiles; moderator dashboard; assignment matrix + super-moderator; moderator profiles/history; async export jobs + S3-class storage; run VODs/supporting files; paired public/runner app — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
+- Wishlist (not this assignment): sortable columns on games list and boards (easy short-term); near-term notifications; medium-term mod discussion board; long-term run stats/visualizations; player profiles; moderator dashboard; assignment matrix + super-moderator; moderator profiles/history; async export jobs + S3-class storage; run VODs/supporting files; paired public/runner app — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled
 
 ## What we would do next
 

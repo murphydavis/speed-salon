@@ -60,7 +60,7 @@ v1 uses resource identifiers, standard verbs, JSON representations, and meaningf
 
 **Bulk (demo scale):** same shape, scaled to **a few hundred thousand runs**. Status mix roughly **~90% approved / ~7% pending / ~3% rejected** (order-of-magnitude, not a SLA). Runner activity is **skewed** (a few runners have many runs; most have few), not uniform. Games are few relative to runs, but **at least 20 distinct games**. Load with `COPY` or batched inserts. **At least one board (game + category) has more than 10 000 eligible approved runs** so the default CSV cap and `ignoreMaxRows` can be exercised.
 
-After bulk is applied, **every table has at least 20 rows**: games, categories, runners, moderators, moderator_games, runs, run_splits, bans, review_events. **≥20 moderators**, **≥20 bans** spanning every appeal state, multi-moderator games and multi-game moderators, mixed category counts (including unset defaults), and sampled splits plus review events (approve, reject reasons, ban/appeal, set_default_category). Bulk uses its own UUID prefix `...-b...`; it does not add rows to fixture boards. Optional Compose command, not first-volume init — tests stay on fixture only. Re-applying after a bulk change: reset, fixture, then bulk.
+After bulk is applied, **every table has at least 20 rows**: games, categories, runners, moderators, moderator_games, runs, run_splits, bans, review_events. **≥20 moderators**, **≥20 bans** spanning every appeal state, multi-moderator games and multi-game moderators, mixed category counts (including unset defaults), and sampled splits plus review events (approve, reject reasons, ban/appeal, set_default_category). **Every category has at least 50 non-rejected runs** (a 32 approved / 14 pending / 6 banned mix is enough), so a board with pending and banned shown is at least that long. Bulk uses its own UUID prefix `...-b...`. The main load stays on bulk boards; a pad step may add slow filler runs on short fixture categories so walking-slice ranking is unchanged. Optional Compose command, not first-volume init — tests stay on fixture only. Re-applying after a bulk change: reset, fixture, then bulk.
 
 ## 2026-10-14 — Schema in `db/`; Compose init on empty volume
 
@@ -112,7 +112,7 @@ Durable shipping (CloudWatch, OpenSearch, a log vendor) waits on hosting choices
 
 ## 2026-10-15 — Board extras are query flags, not a schema change
 
-`includePending` / `includeBanned` on the leaderboard reuse existing `runs` + `bans`. Ranked `place` stays eligible-only. Extra rows are mixed in by time.
+`includePending` / `includeBanned` on the leaderboard reuse existing `runs` + `bans`. Ranked `place` stays eligible-only. Extra runs are mixed in by time.
 
 ## 2026-10-15 — Include flags join pagination total
 
@@ -122,13 +122,13 @@ Supersedes extras-only-on-the-current-page. When either include flag is true, `t
 
 Runs have no separate completed timestamp. The board shows `submitted_at` in that role. A real completed-at would be a schema change later.
 
-## 2026-10-15 — CSV is the full matching board, capped at 10 000 rows
+## 2026-10-15 — CSV is the full matching board, capped at 10 000 runs
 
-Export uses the same category, mode, search, and include flags as the HTML table, not only the current page. Rows are merged by time (extras mixed in when requested), truncated at 10 000. Enough for the fixture and a fair demo; bulk-scale export would need a job.
+Export uses the same category, mode, search, and include flags as the HTML table, not only the current page. Runs are merged by time (extras mixed in when requested), truncated at 10 000. Enough for the fixture and a fair demo; bulk-scale export would need a job.
 
 ## 2026-10-15 — Optional `ignoreMaxRows` attempts an uncapped CSV
 
-`GET /games/{gameId}/leaderboard.csv?ignoreMaxRows=true` skips the 10 000-row cap and asks Postgres for the full matching set. The API still builds the CSV in memory and returns it in one response, so this is a **best-effort attempt**: it can time out or exhaust memory on a bulk board. Default (flag omitted or false) stays capped. A durable job (“prepare export” → file in object storage) is wishlist, not this take-home.
+`GET /games/{gameId}/leaderboard.csv?ignoreMaxRows=true` skips the 10 000-run cap and asks Postgres for the full matching set. The API still builds the CSV in memory and returns it in one response, so this is a **best-effort attempt**: it can time out or exhaust memory on a bulk board. Default (flag omitted or false) stays capped. A durable job (“prepare export” → file in object storage) is wishlist, not this take-home.
 
 ## 2026-10-15 — Medals follow the three fastest eligible runs
 
@@ -136,7 +136,11 @@ Supersedes treating gold/silver/bronze as player-ladder marks on PBs. The podium
 
 ## 2026-10-15 — Medals follow player PBs (Olympic)
 
-Supersedes “three fastest eligible runs” for the emoji. Gold / silver / bronze are 1st / 2nd / 3rd on the **player** board, shown on that runner’s PB row in both ranking modes. One person cannot take gold, silver, and bronze with three throws. `playerPlace` is computed on the **unfiltered** eligible board so search does not promote 2nd to gold. `runPlace` may still name the three fastest *runs* in the API/CSV; the UI medals use `playerPlace` and `isPb`.
+Supersedes “three fastest eligible runs” for the emoji. Gold / silver / bronze are 1st / 2nd / 3rd on the **player** board, shown on that runner’s PB in both ranking modes. One person cannot take gold, silver, and bronze with three throws. `playerPlace` is computed on the **unfiltered** eligible board so search does not promote 2nd to gold. `runPlace` may still name the three fastest *runs* in the API/CSV; the UI medals use `playerPlace` and `isPb`.
+
+## 2026-10-15 — Games list counts are runs, not unique runners
+
+`GET /games` returns `totalRuns` (every status), `approvedRuns` (approved + no active ban), `pendingRuns`, and `bannedRuns` (approved + active ban) over every category of the game. `GET /games/{gameId}` repeats those game-wide fields and puts the same four counts on each category for the board UI. Search `q` is `ILIKE` on `games.name`. Sortable columns are wishlist.
 
 ## 2026-10-15 — UI pager uses the existing `page` query
 

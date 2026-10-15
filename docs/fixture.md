@@ -45,7 +45,7 @@ Full UUIDs share the prefix `00000000-0000-4000-`.
 
 ## Optional bulk seed
 
-Not loaded on Compose init. `docker compose --profile tools run --rm db-seed-bulk` (`db/seed/002_bulk.sql`). Prefix `00000000-0000-4000-b`. Does not write to fixture boards. After bulk, every table has ≥20 rows (24 games, 24 bulk mods, mixed appeal bans, multi-mod games). Re-load: reset, fixture, bulk.
+Not loaded on Compose init. `docker compose --profile tools run --rm db-seed-bulk` (`db/seed/002_bulk.sql`). Prefix `00000000-0000-4000-b`. Main load is bulk boards; a pad may add slow runs on short fixture categories so every category has ≥50 non-rejected runs. After bulk, every table has ≥20 rows (24 games, 24 bulk mods, mixed appeal bans, multi-mod games). Re-load: reset, fixture, bulk.
 
 | Meaning | Id |
 |---------|-----|

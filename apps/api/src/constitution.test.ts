@@ -62,6 +62,64 @@ describe("lists for the console", () => {
     assert.ok(alice.assignedGameIds.includes(SM64));
   });
 
+  test("games list includes SM64 counts and name search", async () => {
+    const body = await json("/games");
+    const sm64 = body.items.find((g: { name: string }) => g.name === "Super Mario 64");
+    assert.ok(sm64);
+    const summed = await pool.query<{
+      total: string;
+      approved: string;
+      pending: string;
+      banned: string;
+    }>(
+      `SELECT
+         count(*)::text AS total,
+         count(*) FILTER (
+           WHERE r.status = 'approved' AND NOT EXISTS (
+             SELECT 1 FROM bans b
+             WHERE b.runner_id = r.runner_id AND b.appeal_state <> 'approved'
+           )
+         )::text AS approved,
+         count(*) FILTER (WHERE r.status = 'pending')::text AS pending,
+         count(*) FILTER (
+           WHERE r.status = 'approved' AND EXISTS (
+             SELECT 1 FROM bans b
+             WHERE b.runner_id = r.runner_id AND b.appeal_state <> 'approved'
+           )
+         )::text AS banned
+       FROM runs r
+       WHERE r.category_id IN ($1, $2)`,
+      [ANY, HUNDO],
+    );
+    const anyOnly = await pool.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM runs r
+       WHERE r.category_id = $1 AND r.status = 'approved' AND NOT EXISTS (
+         SELECT 1 FROM bans b
+         WHERE b.runner_id = r.runner_id AND b.appeal_state <> 'approved'
+       )`,
+      [ANY],
+    );
+    assert.equal(sm64.totalRuns, Number(summed.rows[0].total));
+    assert.equal(sm64.approvedRuns, Number(summed.rows[0].approved));
+    assert.equal(sm64.pendingRuns, Number(summed.rows[0].pending));
+    assert.equal(sm64.bannedRuns, Number(summed.rows[0].banned));
+    assert.ok(sm64.totalRuns > sm64.approvedRuns);
+    assert.ok(Number(summed.rows[0].approved) > Number(anyOnly.rows[0].n));
+    const detail = await json(`/games/${SM64}`);
+    assert.equal(detail.totalRuns, sm64.totalRuns);
+    assert.equal(detail.approvedRuns, sm64.approvedRuns);
+    assert.equal(detail.pendingRuns, sm64.pendingRuns);
+    assert.equal(detail.bannedRuns, sm64.bannedRuns);
+    const anyCat = detail.categories.find((c: { slug: string }) => c.slug === "any");
+    const hundoCat = detail.categories.find((c: { slug: string }) => c.slug === "100");
+    assert.ok(anyCat && hundoCat);
+    assert.equal(anyCat.totalRuns + hundoCat.totalRuns, detail.totalRuns);
+    assert.notEqual(anyCat.totalRuns, hundoCat.totalRuns);
+    const found = await json("/games?q=Mario");
+    assert.ok(found.items.some((g: { name: string }) => g.name === "Super Mario 64"));
+    assert.ok(found.items.every((g: { name: string }) => g.name.toLowerCase().includes("mario")));
+  });
+
   test("SM64 pending queue includes PendingPatty", async () => {
     const body = await json(`/games/${SM64}/runs?status=pending`, { [MODERATOR_HEADER]: ALICE });
     const names = body.items.map((row: { runnerName: string }) => row.runnerName);

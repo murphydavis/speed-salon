@@ -18,16 +18,21 @@ paths:
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/limit"
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Optional game-name search. Omit or leave empty for the full list.
       responses:
         "200":
-          description: Paginated games
+          description: Paginated games with totalRuns, approvedRuns, pendingRuns, bannedRuns (across all categories)
   /games/{gameId}:
     get:
       parameters:
         - $ref: "#/components/parameters/gameId"
       responses:
         "200":
-          description: Game, categories, resolved default
+          description: Game, per-category run counts, resolved default, game-wide run counts
         "404":
           $ref: "#/components/responses/Error"
   /games/{gameId}/runs:
@@ -121,7 +126,7 @@ paths:
           in: query
           schema:
             type: boolean
-          description: When true, attempt the full matching set with no 10000-row cap. May time out or exhaust memory.
+          description: When true, attempt the full matching set with no 10000-run cap. May time out or exhaust memory.
       responses:
         "200":
           description: CSV of the matching board (default cap 10000 unless ignoreMaxRows)
