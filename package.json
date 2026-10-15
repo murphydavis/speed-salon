@@ -1,0 +1,15 @@
+{
+  "name": "speed-salon",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @speed-salon/api",
+    "test": "npm run test -w @speed-salon/api"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

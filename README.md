@@ -4,7 +4,7 @@ Moderator console for a speedrunning website: leaderboards by **game + category*
 
 This repository is a take-home for a senior full-stack role (Node / Express / TypeScript / Postgres / React). It is an **initial best attempt** at the platform, not a years-polished production tool. The prompt’s ~2 hours is a scope hint. It is designed to run locally with Docker Compose once the runtime is added.
 
-**You are here:** Postgres schema + fixture seed. API and web are not started. Start with `AGENTS.md`, `docs/requirements.md`, [`docs/roadmap.md`](docs/roadmap.md), and [`docs/fixture.md`](docs/fixture.md).
+**You are here:** Postgres + walking-slice API (leaderboard, run detail, approve/reject). Web is not started.
 
 ## How to run
 
@@ -14,7 +14,15 @@ Prerequisites: Docker. Defaults match `.env.example` (`speedsalon` / `speedsalon
 docker compose up -d db
 ```
 
-Connect a SQL client to `localhost:5432` with those credentials. First start loads schema and fixture. API and web are not wired yet.
+Connect a SQL client to `localhost:5432` with those credentials. First start loads schema and fixture. Web is not wired yet.
+
+```bash
+npm install
+npm test
+npm run dev
+```
+
+API: `http://localhost:3000` — `X-Moderator-Id` on POST. Explorer: [`http://localhost:3000/docs`](http://localhost:3000/docs). IDs: [`docs/fixture.md`](docs/fixture.md).
 
 Reset to empty schema, then load fixture data:
 
@@ -40,19 +48,20 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 - Current moderator is `X-Moderator-Id`. Mutations are scoped to assigned games.
 - Two seeds: small **fixture** for tests; **bulk** on the order of hundreds of thousands of runs.
 - REST v1 is resource HTTP (verbs, statuses), not a hypermedia graph.
+- Persistence is **`pg` + SQL** (ranking and seed stay explicit). Prisma is wishlist, not this take-home.
 
 ## Unfinished / not started
 
 Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftovers:
 
 - Phase 1 leftover: **bulk seed** (hundreds of thousands of runs)
-- Phase 2: Resource list / growing OpenAPI, constitution tests, Express implementation
+- Phase 2 leftover: ban/appeal mutations, CSV, set default category, remaining constitution tests
 - Phase 3: Walking-slice UI then remaining screens / Compose demo
 - Appeal evidence storage (intentionally deferred; see data model stub)
 
 ## What we would do next
 
-Next: **phase 2 walking slice** — resource list, constitution tests, Express — see [`docs/roadmap.md`](docs/roadmap.md).
+Next: remaining API (ban/CSV/default) or walking-slice UI — see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Maintaining this project
 

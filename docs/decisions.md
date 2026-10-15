@@ -78,7 +78,24 @@ GIN index on `runners.name` with `gin_trgm_ops` so `ILIKE` / similarity stay usa
 
 Fixture writes `appeal_submit` review events and `bans.appeal_state`. No runner-facing appeal UI. Moderator appeal decide can wait until that mutation is scheduled.
 
+## 2026-10-15 — API uses `pg`, Express, tsx, npm workspaces, node:test
+
+Assignment stack is Express + TypeScript. `tsx` runs TypeScript in dev and tests without a compile step. npm workspaces link `packages/shared`. Tests use Node’s built-in runner.
+
+## 2026-10-15 — Explicit SQL via `pg`; an ORM is wishlist, not this assignment
+
+`pg` is the query driver. No Prisma (or other ORM) in v1.
+
+Leaderboard eligibility, player vs run ranking, tie-break, and pagination are already SQL (`DISTINCT ON`, indexes, `db/queries/ranking.sql`). An ORM’s default find/include path would hide that or force `$queryRaw` anyway. Schema and fixture already live in `db/` SQL; Prisma would add a second source of truth. Bulk seed is `COPY` / batched insert, not hundreds of thousands of `save()` calls. `pg` is enough to parameterize queries and run transactions, so a new dependency is not justified.
+
+A later move to Prisma (or similar) for CRUD typing and migrations is **wishlist only** — not a roadmap phase and not in scope for this take-home. See [`roadmap.md`](roadmap.md) Later / unscheduled.
+
+## 2026-10-15 — Swagger UI at `GET /docs` from the existing OpenAPI file
+
+The spec file is already canonical for HTTP shapes. Serving it plus a Swagger UI page is a small Express addition: `GET /openapi.yaml` reads `docs/openapi.yaml`; `GET /docs` is a static HTML shell that loads Swagger UI from a CDN (`swagger-ui-dist`). No npm package. `servers` uses `/` so Try it out hits the same origin. The spec is still a walking-slice sketch (paths and errors, not a full schema novel); the explorer is for reviewers, not a second product UI.
+
+If the CDN is blocked, the YAML in `docs/` still works in any OpenAPI viewer.
+
 ## Open (resolve when implementing)
 
 - CSV: full matching set vs same page vs hard row cap.
-- ORM vs `pg` + SQL for queries (lean: `pg` + SQL unless an ADR says otherwise).

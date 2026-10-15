@@ -1,0 +1,152 @@
+openapi: 3.1.0
+info:
+  title: Speed Salon API
+  version: 0.1.0
+servers:
+  - url: /
+paths:
+  /games:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Paginated games
+  /games/{gameId}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      responses:
+        "200":
+          description: Game, categories, resolved default
+        "404":
+          $ref: "#/components/responses/Error"
+  /games/{gameId}/leaderboard:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: mode
+          in: query
+          schema:
+            type: string
+            enum: [players, runs]
+            default: players
+        - name: q
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Ranked eligible runs
+  /runs/{runId}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/runId"
+      responses:
+        "200":
+          description: Run detail
+        "404":
+          $ref: "#/components/responses/Error"
+  /runs/{runId}/approval:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/runId"
+      security:
+        - moderatorHeader: []
+      responses:
+        "200":
+          description: Approved run
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+  /runs/{runId}/rejection:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/runId"
+      security:
+        - moderatorHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, comment]
+              properties:
+                reason:
+                  type: string
+                comment:
+                  type: string
+      responses:
+        "200":
+          description: Rejected run
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+components:
+  securitySchemes:
+    moderatorHeader:
+      type: apiKey
+      in: header
+      name: X-Moderator-Id
+  parameters:
+    gameId:
+      name: gameId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    runId:
+      name: runId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+  responses:
+    Error:
+      description: Structured error
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status, code, message]
+            properties:
+              status:
+                type: integer
+              code:
+                type: string
+              message:
+                type: string

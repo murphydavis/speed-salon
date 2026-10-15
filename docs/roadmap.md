@@ -54,21 +54,23 @@ Compose Postgres belongs here so the schema has a place to live. Full `docker co
 
 ### 2.1 Spec as we go
 
-- [ ] Short resource list + error model (paths, verbs, statuses) **before** the first handlers for that resource
-- [ ] OpenAPI file in repo, grown in the **same change** as the handlers it describes — not a finished novel before any code
+- [x] Short resource list + error model (paths, verbs, statuses) **before** the first handlers for that resource (2026-10-15)
+- [x] OpenAPI file in repo, grown in the **same change** as the handlers it describes — not a finished novel before any code (2026-10-15 walking slice)
+- [x] Spec explorer: `GET /docs` (Swagger UI) + `GET /openapi.yaml` — no extra npm package (2026-10-15)
 
 ### 2.2 Tests as a list, then one at a time
 
-- [ ] Written **test list** of constitution cases: status machine, reject reason + comment, ACL 401/403, ranking eligibility, pagination required, ban inactivate/restore
-- [ ] Executable tests added **incrementally** (one failing test → pass → next). Do not freeze a complete red suite before any server exists.
-- [ ] Do **not** aim for exhaustive CRUD of every table; skip noise that does not encode a product rule
+- [x] Written **test list** of constitution cases: status machine, reject reason + comment, ACL 401/403, ranking eligibility, pagination required, ban inactivate/restore (2026-10-15; ban still open)
+- [x] Executable tests added **incrementally** (one failing test → pass → next). Do not freeze a complete red suite before any server exists. (2026-10-15 walking slice)
+- [x] Do **not** aim for exhaustive CRUD of every table; skip noise that does not encode a product rule
 
 ### 2.3 Implementation with the tests
 
 - [ ] Implement so current tests pass; widen with the walking slice
-  - [ ] Modular factoring: data-model types / thin persistence module reflecting Postgres — not inlined across route handlers, and **not** a generic ORM that hides ranking SQL
-  - [ ] Moderator identity and game assignment enforced on mutations
-  - [ ] Ranking queries use explicit SQL (or a thin query layer) and pagination
+  - [x] Modular factoring: data-model types / thin persistence module reflecting Postgres — not inlined across route handlers, and **not** a generic ORM that hides ranking SQL (2026-10-15)
+  - [x] Moderator identity and game assignment enforced on mutations (2026-10-15)
+  - [x] Ranking queries use explicit SQL (or a thin query layer) and pagination (2026-10-15)
+  - [ ] Ban/appeal mutations, CSV, set default category
 
 ---
 
@@ -84,8 +86,9 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 
 ## Later / unscheduled
 
-Not a phase until promoted here with a checkbox:
+Not a phase until promoted here with a checkbox. **Wishlist** items are not assignment work unless they are moved up.
 
+- Prisma or similar ORM (typed CRUD, generated client). Current persistence is `pg` + explicit SQL; see [`decisions.md`](decisions.md). Do not introduce an ORM during this take-home.
 - Appeal documents and correspondence (stubbed in [`data-model.md`](data-model.md))
 - Fielding hypermedia beyond pagination `next`
 - Anything listed as out of scope in [`requirements.md`](requirements.md)

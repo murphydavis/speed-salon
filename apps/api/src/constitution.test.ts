@@ -1,0 +1,148 @@
+import assert from "node:assert/strict";
+import { once } from "node:events";
+import { createServer, type Server } from "node:http";
+import { after, before, describe, test } from "node:test";
+import { MODERATOR_HEADER } from "@speed-salon/shared";
+import { createApp } from "./app.js";
+import { createPool, type Pool } from "./db/pool.js";
+
+const DATABASE_URL =
+  process.env.DATABASE_URL ??
+  "postgresql://speedsalon:speedsalon@127.0.0.1:5432/speedsalon";
+
+const SM64 = "00000000-0000-4000-a000-000000000001";
+const ALICE = "00000000-0000-4000-a200-000000000001";
+const UNKNOWN = "00000000-0000-4000-a200-000000009999";
+const PENDING_SM64 = "00000000-0000-4000-a500-000000000301";
+const REJECTED_SM64 = "00000000-0000-4000-a500-000000000302";
+const CELESTE_PENDING = "00000000-0000-4000-a500-000000000502";
+const DASH_PB = "00000000-0000-4000-a500-000000000001";
+
+let pool: Pool;
+let server: Server;
+let base: string;
+
+before(async () => {
+  pool = createPool(DATABASE_URL);
+  const app = createApp(pool);
+  server = createServer(app);
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const addr = server.address();
+  if (!addr || typeof addr === "string") throw new Error("no port");
+  base = `http://127.0.0.1:${addr.port}`;
+});
+
+after(async () => {
+  server.close();
+  await pool.end();
+});
+
+describe("openapi explorer", () => {
+  test("serves the spec and swagger page", async () => {
+    const spec = await fetch(`${base}/openapi.yaml`);
+    assert.equal(spec.status, 200);
+    assert.match(await spec.text(), /^openapi:/);
+    const docs = await fetch(`${base}/docs`);
+    assert.equal(docs.status, 200);
+    assert.match(await docs.text(), /swagger-ui/i);
+  });
+});
+
+describe("leaderboard", () => {
+  test("player mode: one DashMain place, no pending/rejected/active bans", async () => {
+    const body = await json(`/games/${SM64}/leaderboard?limit=50`);
+    assert.equal(body.mode, "players");
+    assert.ok(body.limit <= 100);
+    assert.ok(body.items.length <= body.limit);
+    const names = body.items.map((row: { runner: { name: string } }) => row.runner.name);
+    assert.equal(names.filter((n: string) => n === "DashMain").length, 1);
+    assert.equal(body.items[0].runner.name, "DashMain");
+    assert.ok(!names.includes("PendingPatty"));
+    assert.ok(!names.includes("RejectRay"));
+    assert.ok(!names.includes("BannedNoAppeal"));
+    assert.ok(!names.includes("BannedPendingAppeal"));
+    assert.ok(!names.includes("BannedAppealDenied"));
+    assert.ok(names.includes("BannedAppealWon"));
+  });
+
+  test("run mode lists multiple DashMain times", async () => {
+    const body = await json(`/games/${SM64}/leaderboard?mode=runs&limit=50`);
+    assert.equal(body.mode, "runs");
+    const dash = body.items.filter((row: { runner: { name: string } }) => row.runner.name === "DashMain");
+    assert.ok(dash.length >= 8);
+    assert.equal(body.items[0].runId, DASH_PB);
+  });
+});
+
+describe("moderation", () => {
+  test("mutation without header is 401", async () => {
+    const res = await fetch(`${base}/runs/${PENDING_SM64}/approval`, { method: "POST" });
+    assert.equal(res.status, 401);
+    const body = await res.json();
+    assert.equal(body.code, "unauthorized");
+  });
+
+  test("unknown moderator is 401", async () => {
+    const res = await fetch(`${base}/runs/${PENDING_SM64}/approval`, {
+      method: "POST",
+      headers: { [MODERATOR_HEADER]: UNKNOWN, "content-type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(res.status, 401);
+  });
+
+  test("Alice cannot reject Celeste pending", async () => {
+    const res = await fetch(`${base}/runs/${CELESTE_PENDING}/rejection`, {
+      method: "POST",
+      headers: { [MODERATOR_HEADER]: ALICE, "content-type": "application/json" },
+      body: JSON.stringify({ reason: "invalid_proof", comment: "nope" }),
+    });
+    assert.equal(res.status, 403);
+  });
+
+  test("reject with empty comment is 400", async () => {
+    const res = await fetch(`${base}/runs/${PENDING_SM64}/rejection`, {
+      method: "POST",
+      headers: { [MODERATOR_HEADER]: ALICE, "content-type": "application/json" },
+      body: JSON.stringify({ reason: "invalid_proof", comment: "   " }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.equal(body.code, "invalid_reject");
+  });
+
+  test("reject already-rejected run is 409", async () => {
+    const res = await fetch(`${base}/runs/${REJECTED_SM64}/rejection`, {
+      method: "POST",
+      headers: { [MODERATOR_HEADER]: ALICE, "content-type": "application/json" },
+      body: JSON.stringify({ reason: "invalid_proof", comment: "again" }),
+    });
+    assert.equal(res.status, 409);
+  });
+
+  test("Alice can approve SM64 pending", async () => {
+    try {
+      const res = await fetch(`${base}/runs/${PENDING_SM64}/approval`, {
+        method: "POST",
+        headers: { [MODERATOR_HEADER]: ALICE, "content-type": "application/json" },
+        body: "{}",
+      });
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.status, "approved");
+      assert.ok(body.reviewEvents.some((e: { action: string }) => e.action === "approve"));
+    } finally {
+      await pool.query(`DELETE FROM review_events WHERE run_id = $1 AND action = 'approve'`, [
+        PENDING_SM64,
+      ]);
+      await pool.query(`UPDATE runs SET status = 'pending' WHERE id = $1`, [PENDING_SM64]);
+    }
+  });
+});
+
+async function json(path: string) {
+  const res = await fetch(`${base}${path}`);
+  assert.equal(res.status, 200);
+  return res.json();
+}

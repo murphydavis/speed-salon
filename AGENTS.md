@@ -44,7 +44,7 @@ Do not implement behavior that violates these. If a requested feature conflicts,
 ## Engineering standards
 
 - TypeScript **strict**. Shared vocabulary (statuses, header name, DTO shapes, reject reasons, ranking mode) lives in `packages/shared` once code exists — API and web must not fork string unions.
-- Prefer **explicit SQL** (or a thin query layer) for leaderboard and seed paths. Do not hide ranking semantics inside an ORM convenience that cannot use the indexes. Persistence modules stay thin; no generic repository forest.
+- Prefer **explicit SQL** (or a thin query layer) for leaderboard and seed paths. Do not hide ranking semantics inside an ORM convenience that cannot use the indexes. Persistence modules stay thin; no generic repository forest. An ORM (e.g. Prisma) is **wishlist only** — not this assignment; see `docs/roadmap.md` Later / unscheduled.
 - Validate mutations on the **server**. The UI may hide illegal actions; the API still enforces them.
 - Fail with **typed, structured errors** (status, code, message). Do not return raw stack traces to the client.
 - No secrets in git. Compose and `.env.example` document required variables; real `.env` is gitignored.
@@ -68,6 +68,4 @@ Commit messages say **why**. Do not commit `.env`, credentials, or generated `no
 5. Tests: keep a list of constitution cases; implement **one failing test at a time**. Do not author an entire red suite before a server exists.
 6. Note leftovers in `README.md` rather than pretending they shipped. Check the matching roadmap box when a phase is actually done.
 
-## Code is not started yet
-
-Schema and fixture live in `db/`. Application packages follow [`docs/roadmap.md`](docs/roadmap.md). Do not invent a parallel structure — follow `docs/project-structure.md` and `docs/architecture.md`.
+Schema and fixture live in `db/`. API walking slice lives in `apps/api` and `packages/shared`. Follow `docs/project-structure.md` and `docs/architecture.md`.

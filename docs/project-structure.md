@@ -6,7 +6,8 @@ Single repository. Display name **Speed Salon**; directory `speed-salon`.
 speed-salon/
   AGENTS.md                 # how humans and agents must work
   README.md                 # run, decisions summary, unfinished, next
-  docker-compose.yml        # Postgres now; api/web later
+  docker-compose.yml        # Postgres; api/web later
+  package.json              # npm workspaces
   db/
     migrations/             # versioned SQL (001_schema.sql)
     seed/                   # 001_fixture.sql
@@ -21,10 +22,10 @@ speed-salon/
     fixture.md
     project-structure.md    # this file
   apps/
-    api/                    # Express + TypeScript (future)
+    api/                    # Express + TypeScript
     web/                    # React + TypeScript (future)
   packages/
-    shared/                 # unions, DTOs, header name (future)
+    shared/                 # unions, header name
   .cursor/rules/            # short pointers at AGENTS.md
 ```
 
@@ -50,6 +51,7 @@ These are the intended entry points, not created yet:
 - `docs/fixture.md` — stable IDs for tests and act-as
 - `apps/api/src/index.ts` — HTTP server
 - `apps/api/src/middleware/moderator.ts` — header identity
+- `docs/api.md` / `docs/openapi.yaml` — HTTP shapes
 - `apps/web/src/App.tsx` (or router root) — game page + ranking toggle
 - `packages/shared/src/index.ts` — `RunStatus`, `RejectReason`, `RankingMode`, `AppealState`, `MODERATOR_HEADER`
 
