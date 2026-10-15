@@ -4,7 +4,7 @@ Moderator console for a speedrunning website: leaderboards by **game + category*
 
 This repository is a take-home for a senior full-stack role (Node / Express / TypeScript / Postgres / React). It is designed to run locally with Docker Compose once the runtime is added.
 
-**You are here:** documentation and repository outline only. There is no application yet. Start with `AGENTS.md` and `docs/requirements.md`.
+**You are here:** documentation and repository outline only. There is no application yet. Start with `AGENTS.md`, `docs/requirements.md`, and [`docs/roadmap.md`](docs/roadmap.md).
 
 ## How to run
 
@@ -33,20 +33,17 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 
 ## Unfinished / not started
 
-- Docker Compose, API, web app, database schema, seed
-- Leaderboard UI, ranking toggle, filters, CSV
-- Run detail, approve/reject, ban/appeal UI
+Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftovers:
+
+- Phase 1: Postgres schema, indexes, migrations, seed tool
+- Phase 2: OpenAPI (or equivalent spec), API tests, Express implementation
+- Phase 3: React UI and full Compose demo
 - Appeal evidence storage (intentionally deferred; see data model stub)
 
 ## What we would do next
 
-1. Postgres schema + constraints + indexes matching `docs/data-model.md`
-2. Bulk seed that demonstrates player vs run ranking and all appeal states
-3. Read APIs (game default board, category list, run detail)
-4. Mutation APIs with header ACL and append-only events
-5. Thin React UI over those APIs
-6. Compose so `docker compose up` is the whole demo
+Current phase is **1. Postgres data model** — see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Maintaining this project
 
-`AGENTS.md` is binding for humans and agents. If AI tools are unavailable, continue from `docs/` and this README; do not reverse product rules to save time without updating `docs/decisions.md`.
+`AGENTS.md`, `docs/`, and the roadmap are binding for humans and agents. If AI tools are unavailable, continue from those files. If code and docs conflict, stop and decide — do not reverse product rules quietly. Record sequence and architecture changes in `docs/roadmap.md` and `docs/decisions.md`.

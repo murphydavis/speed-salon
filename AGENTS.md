@@ -1,6 +1,8 @@
 # Speed Salon — agent and human constitution
 
-This file is the source of truth for how work is done. Documentation in `docs/` is the source of truth for *what* the product is. If code and docs disagree, **fix the code or update the docs in the same change** — silent drift is a defect.
+This file is the source of truth for how work is done. Documentation in `docs/` is the source of truth for *what* the product is. [`docs/roadmap.md`](docs/roadmap.md) is the source of truth for *build order*. Together they are binding on humans and agents.
+
+If code and docs disagree, **stop and surface the conflict** — do not pick a silent winner. Resolution is an explicit decision: change the implementation, change the documentation, or both, in the same change. Silent drift is a defect.
 
 A future engineer with no AI must be able to continue from these files alone.
 
@@ -29,6 +31,8 @@ Do not implement behavior that violates these. If a requested feature conflicts,
 - Behavior change ⇒ update the relevant file under `docs/` in the same commit when possible.
 - New architectural choice ⇒ add a dated entry in `docs/decisions.md`.
 - Unfinished work, stubs, and known breakage live in `README.md` (and may be cross-linked from requirements).
+- Build sequence and phase completion live in `docs/roadmap.md` (checkboxes). Completing a phase means checking it in the same change.
+- Do not skip, reorder, or add phases without updating the roadmap first.
 - Do not leave “the model knows” as the only record of a decision.
 
 ## Engineering standards
@@ -51,11 +55,13 @@ Commit messages say **why**. Do not commit `.env`, credentials, or generated `no
 
 ## How to work in this repo
 
-1. Read `README.md`, this file, and `docs/requirements.md` before changing behavior.
-2. If the change is product or architecture, write or update docs first.
-3. Implement the smallest slice that preserves the rules above.
-4. Note leftovers in `README.md` rather than pretending they shipped.
+1. Read `README.md`, this file, `docs/requirements.md`, and `docs/roadmap.md` before changing behavior.
+2. Work the current open phase. Do not implement a later phase “while we’re here.”
+3. If the change is product, architecture, or sequence, write or update docs first.
+4. If you hit a conflict between docs, tests, spec, and code, stop and ask — then record the decision.
+5. Implement the smallest slice that preserves the rules above.
+6. Note leftovers in `README.md` rather than pretending they shipped. Check the matching roadmap box when a phase is actually done.
 
 ## Code is not started yet
 
-Application packages, Compose, and schema will be added after this documentation outline. Until then, do not invent a parallel structure — follow `docs/project-structure.md` and `docs/architecture.md`.
+Application packages, Compose, and schema follow [`docs/roadmap.md`](docs/roadmap.md). Until a phase starts, do not invent a parallel structure — follow `docs/project-structure.md` and `docs/architecture.md`.

@@ -5,8 +5,8 @@ alwaysApply: true
 
 # Constitution
 
-`AGENTS.md` is mandatory. Product truth lives in `docs/`. If code and docs disagree, fix them together in the same change.
+`AGENTS.md` is mandatory. Product truth lives in `docs/`. Build order lives in `docs/roadmap.md`. If code, tests, spec, and docs disagree, stop and surface the conflict — do not silently pick a winner.
 
 Do not add application code that violates `docs/requirements.md` (ranking modes, reject reason + comment, reversible bans with appeal state, header auth, no deletes for bans, pagination).
 
-Do not invent a different repo layout than `docs/project-structure.md`. New architectural choices go in `docs/decisions.md`.
+Do not skip roadmap phases. Do not invent a different repo layout than `docs/project-structure.md`. New architectural choices go in `docs/decisions.md`.

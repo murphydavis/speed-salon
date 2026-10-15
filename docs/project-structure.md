@@ -12,6 +12,7 @@ speed-salon/
     architecture.md
     data-model.md
     decisions.md
+    roadmap.md
     project-structure.md    # this file
   apps/
     api/                    # Express + TypeScript (future)
@@ -43,4 +44,4 @@ These are the intended entry points, not created yet:
 - `apps/web/src/App.tsx` (or router root) — game page + ranking toggle
 - `packages/shared/src/index.ts` — `RunStatus`, `RejectReason`, `RankingMode`, `AppealState`, `MODERATOR_HEADER`
 
-Best first **code** change after docs: schema + bulk seed, because ranking, bans, and scale are the risky parts.
+Build order is [`docs/roadmap.md`](roadmap.md). Best first **code** after docs: schema + bulk seed (phase 1).

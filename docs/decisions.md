@@ -34,6 +34,10 @@ Assignment constraint from the prompt. No login system.
 
 A banned runner leaves **all** leaderboards. Per-game bans would be a later requirement.
 
+## 2026-10-14 — Roadmap is a binding doc with checkboxes
+
+Sequence of work lives in `docs/roadmap.md`, not only in README “next” bullets. Phase 2 is spec (OpenAPI preferred) → accepted tests → implementation, with data-model types factored out of route handlers. Conflicts between docs and code are surfaced for an explicit decision.
+
 ## Open (resolve when implementing)
 
 - Exact tie-break after `time_ms` (run id vs earlier submission).
