@@ -1,9 +1,53 @@
 import {
   REJECT_REASONS,
+  RUN_STATUSES,
   type RejectReason,
+  type RunStatus,
 } from "@speed-salon/shared";
 import { ApiError, notFound } from "../errors.js";
 import type { Pool, PoolClient } from "./pool.js";
+
+export async function listGameRuns(
+  pool: Pool,
+  gameId: string,
+  status: RunStatus,
+  page: number,
+  limit: number,
+): Promise<{ items: GameRunRow[]; total: number }> {
+  const count = await pool.query<{ n: string }>(
+    `SELECT count(*)::text AS n
+     FROM runs r
+     JOIN categories c ON c.id = r.category_id
+     WHERE c.game_id = $1 AND r.status = $2`,
+    [gameId, status],
+  );
+  const total = Number(count.rows[0]?.n ?? 0);
+  const result = await pool.query<GameRunRow>(
+    `SELECT
+       r.id, r.status, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
+       r.category_id AS "categoryId", c.name AS "categoryName",
+       rn.id AS "runnerId", rn.name AS "runnerName"
+     FROM runs r
+     JOIN categories c ON c.id = r.category_id
+     JOIN runners rn ON rn.id = r.runner_id
+     WHERE c.game_id = $1 AND r.status = $2
+     ORDER BY r.submitted_at ASC, r.id ASC
+     OFFSET $3 LIMIT $4`,
+    [gameId, status, (page - 1) * limit, limit],
+  );
+  return { items: result.rows, total };
+}
+
+export type GameRunRow = {
+  id: string;
+  status: string;
+  timeMs: number;
+  submittedAt: Date;
+  categoryId: string;
+  categoryName: string;
+  runnerId: string;
+  runnerName: string;
+};
 
 export async function getRun(pool: Pool, runId: string): Promise<RunDetail> {
   const run = await pool.query<RunHeader>(

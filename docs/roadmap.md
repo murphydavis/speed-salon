@@ -78,8 +78,9 @@ Compose Postgres belongs here so the schema has a place to live. Full `docker co
 
 A crude UI for the walking slice is allowed as soon as the matching API tests are green. Polish and remaining screens come after.
 
-- [ ] Walking-slice UI: game default board, ranking toggle, run detail, approve/reject, act-as header
-- [ ] Remaining requirements: category switch, search/filter, CSV, ban/appeal visibility and actions
+- [x] Walking-slice UI: game default board, ranking toggle, run detail, approve/reject, act-as header (2026-10-15)
+- [x] Category switch on the game page (2026-10-15; API already had `categoryId`)
+- [ ] Remaining requirements: search/filter, CSV, ban/appeal visibility and actions
 - [ ] Compose includes `web` so `docker compose up` is the full local demo
 
 ---
@@ -88,6 +89,7 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 
 Not a phase until promoted here with a checkbox. **Wishlist** items are not assignment work unless they are moved up.
 
+- Durable API logs (ship JSONL off the box). Hosting (AWS vs elsewhere) is undecided; do not pick CloudWatch/ELK in this take-home. Local `logs/api.log` is enough for now; see [`decisions.md`](decisions.md).
 - Prisma or similar ORM (typed CRUD, generated client). Current persistence is `pg` + explicit SQL; see [`decisions.md`](decisions.md). Do not introduce an ORM during this take-home.
 - Appeal documents and correspondence (stubbed in [`data-model.md`](data-model.md))
 - Fielding hypermedia beyond pagination `next`

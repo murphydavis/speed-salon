@@ -5,6 +5,14 @@ info:
 servers:
   - url: /
 paths:
+  /moderators:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Paginated moderators with assigned game ids
   /games:
     get:
       parameters:
@@ -20,6 +28,29 @@ paths:
       responses:
         "200":
           description: Game, categories, resolved default
+        "404":
+          $ref: "#/components/responses/Error"
+  /games/{gameId}/runs:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Paginated runs for a game (review queue)
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
         "404":
           $ref: "#/components/responses/Error"
   /games/{gameId}/leaderboard:
@@ -43,9 +74,21 @@ paths:
             type: string
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/limit"
+        - name: includePending
+          in: query
+          schema:
+            type: boolean
+        - name: includeBanned
+          in: query
+          schema:
+            type: boolean
       responses:
         "200":
-          description: Ranked eligible runs
+          description: Ranked eligible runs; extras mixed by time when flags are set
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
   /runs/{runId}:
     get:
       parameters:

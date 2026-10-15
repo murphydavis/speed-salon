@@ -96,6 +96,22 @@ The spec file is already canonical for HTTP shapes. Serving it plus a Swagger UI
 
 If the CDN is blocked, the YAML in `docs/` still works in any OpenAPI viewer.
 
+## 2026-10-15 — Web is Vite + React; no React Router; Vite proxies the API
+
+CRA is unmaintained. Vite is the usual React + TypeScript toolchain and is enough for a crude console. Pages are `/`, `/games/{id}`, `/runs/{id}` with `history.pushState` — a router package would only wrap that. In development Vite proxies `/games`, `/runs`, and `/moderators` to the API so the browser stays same-origin (no `cors` package). HTML navigations are not proxied (SPA fallback). Compose `web` is still later.
+
+`GET /moderators` and `GET /games/{gameId}/runs?status=` exist so the act-as control and pending queue do not hard-code fixture UUIDs. Domain rules are unchanged.
+
+## 2026-10-15 — Request log is a local JSONL file
+
+Each API request appends one JSON line: received timestamp, duration, method, URL (path + query), status. No request bodies (reject comments). Default file `logs/api.log` relative to the API process (`LOG_FILE` overrides). Tests omit the file. This is enough to see what was called locally; the file can sit in a container with the API process.
+
+Durable shipping (CloudWatch, OpenSearch, a log vendor) waits on hosting choices and is **wishlist only**.
+
+## 2026-10-15 — Board extras are query flags, not a schema change
+
+`includePending` / `includeBanned` on the leaderboard reuse existing `runs` + `bans`. Ranked `total` / `place` / pagination stay eligible-only. Extra rows are capped at `limit` and mixed into the current page by time. Assigned-moderator header required when either flag is true.
+
 ## Open (resolve when implementing)
 
 - CSV: full matching set vs same page vs hard row cap.

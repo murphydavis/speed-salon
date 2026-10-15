@@ -12,6 +12,7 @@ const DATABASE_URL =
 
 const SM64 = "00000000-0000-4000-a000-000000000001";
 const ALICE = "00000000-0000-4000-a200-000000000001";
+const BOB = "00000000-0000-4000-a200-000000000002";
 const UNKNOWN = "00000000-0000-4000-a200-000000009999";
 const PENDING_SM64 = "00000000-0000-4000-a500-000000000301";
 const REJECTED_SM64 = "00000000-0000-4000-a500-000000000302";
@@ -49,6 +50,22 @@ describe("openapi explorer", () => {
   });
 });
 
+describe("lists for the console", () => {
+  test("moderators include Alice assignments", async () => {
+    const body = await json("/moderators");
+    const alice = body.items.find((m: { displayName: string }) => m.displayName === "Alice Koopa");
+    assert.ok(alice);
+    assert.ok(alice.assignedGameIds.includes(SM64));
+  });
+
+  test("SM64 pending queue includes PendingPatty", async () => {
+    const body = await json(`/games/${SM64}/runs?status=pending`, { [MODERATOR_HEADER]: ALICE });
+    const names = body.items.map((row: { runnerName: string }) => row.runnerName);
+    assert.ok(names.includes("PendingPatty"));
+    assert.ok(body.items.some((row: { id: string }) => row.id === PENDING_SM64));
+  });
+});
+
 describe("leaderboard", () => {
   test("player mode: one DashMain place, no pending/rejected/active bans", async () => {
     const body = await json(`/games/${SM64}/leaderboard?limit=50`);
@@ -64,6 +81,33 @@ describe("leaderboard", () => {
     assert.ok(!names.includes("BannedPendingAppeal"));
     assert.ok(!names.includes("BannedAppealDenied"));
     assert.ok(names.includes("BannedAppealWon"));
+  });
+
+  test("includePending without header is 401", async () => {
+    const res = await fetch(`${base}/games/${SM64}/leaderboard?includePending=true`);
+    assert.equal(res.status, 401);
+  });
+
+  test("Bob cannot include SM64 pending", async () => {
+    const res = await fetch(`${base}/games/${SM64}/leaderboard?includePending=true`, {
+      headers: { [MODERATOR_HEADER]: BOB },
+    });
+    assert.equal(res.status, 403);
+  });
+
+  test("Alice can mix pending and banned without changing places", async () => {
+    const body = await json(
+      `/games/${SM64}/leaderboard?limit=50&includePending=true&includeBanned=true`,
+      { [MODERATOR_HEADER]: ALICE },
+    );
+    const dash = body.items.find((row: { runner: { name: string } }) => row.runner.name === "DashMain");
+    assert.equal(dash.place, 1);
+    const pending = body.items.find((row: { runId: string }) => row.runId === PENDING_SM64);
+    assert.equal(pending.kind, "pending");
+    assert.equal(pending.place, null);
+    const banned = body.items.find((row: { runner: { name: string } }) => row.runner.name === "BannedNoAppeal");
+    assert.equal(banned.kind, "banned");
+    assert.equal(banned.place, null);
   });
 
   test("run mode lists multiple DashMain times", async () => {
@@ -141,8 +185,8 @@ describe("moderation", () => {
   });
 });
 
-async function json(path: string) {
-  const res = await fetch(`${base}${path}`);
+async function json(path: string, headers?: Record<string, string>) {
+  const res = await fetch(`${base}${path}`, { headers });
   assert.equal(res.status, 200);
   return res.json();
 }

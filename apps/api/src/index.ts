@@ -7,7 +7,8 @@ const url =
 const port = Number(process.env.PORT ?? 3000);
 
 const pool = createPool(url);
-const app = createApp(pool);
+const logFile = process.env.LOG_FILE ?? "logs/api.log";
+const app = createApp(pool, { logFile });
 
 app.listen(port, () => {
   console.log(`api listening on ${port} — docs http://localhost:${port}/docs`);

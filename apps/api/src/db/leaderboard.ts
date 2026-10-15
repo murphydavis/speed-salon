@@ -37,7 +37,8 @@ export async function listLeaderboard(
       `SELECT * FROM (
          SELECT DISTINCT ON (r.runner_id)
            r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
-           r.runner_id AS "runnerId", rn.name AS "runnerName"
+           r.runner_id AS "runnerId", rn.name AS "runnerName",
+           'ranked'::text AS kind
          FROM runs r
          JOIN runners rn ON rn.id = r.runner_id
          WHERE r.category_id = $1 AND ${ELIGIBLE} AND ${RUNNER_FILTER}
@@ -60,7 +61,8 @@ export async function listLeaderboard(
   const result = await pool.query<LeaderboardRow>(
     `SELECT
        r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
-       r.runner_id AS "runnerId", rn.name AS "runnerName"
+       r.runner_id AS "runnerId", rn.name AS "runnerName",
+       'ranked'::text AS kind
      FROM runs r
      JOIN runners rn ON rn.id = r.runner_id
      WHERE r.category_id = $1 AND ${ELIGIBLE} AND ${RUNNER_FILTER}
@@ -71,10 +73,86 @@ export async function listLeaderboard(
   return { items: result.rows, total: Number(count.rows[0]?.n ?? 0) };
 }
 
+export type LeaderboardKind = "ranked" | "pending" | "banned";
+
 export type LeaderboardRow = {
   id: string;
   timeMs: number;
   submittedAt: Date;
   runnerId: string;
   runnerName: string;
+  kind: LeaderboardKind;
 };
+
+const ACTIVE_BAN = `
+  EXISTS (
+    SELECT 1 FROM bans b
+    WHERE b.runner_id = r.runner_id
+      AND b.appeal_state <> 'approved'
+  )
+`;
+
+export async function listBoardExtras(
+  pool: Pool,
+  categoryId: string,
+  mode: RankingMode,
+  q: string | undefined,
+  includePending: boolean,
+  includeBanned: boolean,
+  limit: number,
+): Promise<LeaderboardRow[]> {
+  const search = q?.trim() ? q.trim() : null;
+  const extras: LeaderboardRow[] = [];
+  if (includePending) {
+    const pending = await pool.query<LeaderboardRow>(
+      `SELECT
+         r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
+         r.runner_id AS "runnerId", rn.name AS "runnerName",
+         'pending'::text AS kind
+       FROM runs r
+       JOIN runners rn ON rn.id = r.runner_id
+       WHERE r.category_id = $1 AND r.status = 'pending' AND ${RUNNER_FILTER}
+       ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC
+       LIMIT $3`,
+      [categoryId, search, limit],
+    );
+    extras.push(...pending.rows);
+  }
+  if (includeBanned) {
+    if (mode === "players") {
+      const banned = await pool.query<LeaderboardRow>(
+        `SELECT * FROM (
+           SELECT DISTINCT ON (r.runner_id)
+             r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
+             r.runner_id AS "runnerId", rn.name AS "runnerName",
+             'banned'::text AS kind
+           FROM runs r
+           JOIN runners rn ON rn.id = r.runner_id
+           WHERE r.category_id = $1 AND r.status = 'approved' AND ${ACTIVE_BAN}
+             AND ${RUNNER_FILTER}
+           ORDER BY r.runner_id, r.time_ms ASC, r.submitted_at ASC, r.id ASC
+         ) best
+         ORDER BY best."timeMs" ASC, best."submittedAt" ASC, best.id ASC
+         LIMIT $3`,
+        [categoryId, search, limit],
+      );
+      extras.push(...banned.rows);
+    } else {
+      const banned = await pool.query<LeaderboardRow>(
+        `SELECT
+           r.id, r.time_ms AS "timeMs", r.submitted_at AS "submittedAt",
+           r.runner_id AS "runnerId", rn.name AS "runnerName",
+           'banned'::text AS kind
+         FROM runs r
+         JOIN runners rn ON rn.id = r.runner_id
+         WHERE r.category_id = $1 AND r.status = 'approved' AND ${ACTIVE_BAN}
+           AND ${RUNNER_FILTER}
+         ORDER BY r.time_ms ASC, r.submitted_at ASC, r.id ASC
+         LIMIT $3`,
+        [categoryId, search, limit],
+      );
+      extras.push(...banned.rows);
+    }
+  }
+  return extras;
+}

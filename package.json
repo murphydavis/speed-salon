@@ -3,10 +3,13 @@
   "private": true,
   "workspaces": [
     "apps/api",
+    "apps/web",
     "packages/shared"
   ],
   "scripts": {
-    "dev": "npm run dev -w @speed-salon/api",
+    "dev": "node scripts/dev.mjs",
+    "dev:api": "npm run dev -w @speed-salon/api",
+    "dev:web": "npm run dev -w @speed-salon/web",
     "test": "npm run test -w @speed-salon/api"
   },
   "engines": {

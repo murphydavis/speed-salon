@@ -13,6 +13,13 @@ export function parsePage(raw: unknown): number {
   return n;
 }
 
+export function parseFlag(raw: unknown): boolean {
+  if (raw === undefined) return false;
+  if (raw === true || raw === "1" || raw === "true") return true;
+  if (raw === false || raw === "0" || raw === "false") return false;
+  throw new ApiError(400, "invalid_query", "flag must be true or false");
+}
+
 export function parseLimit(raw: unknown): number {
   if (raw === undefined) return DEFAULT_LIMIT;
   const n = Number(raw);

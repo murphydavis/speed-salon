@@ -4,7 +4,7 @@ Moderator console for a speedrunning website: leaderboards by **game + category*
 
 This repository is a take-home for a senior full-stack role (Node / Express / TypeScript / Postgres / React). It is an **initial best attempt** at the platform, not a years-polished production tool. The prompt’s ~2 hours is a scope hint. It is designed to run locally with Docker Compose once the runtime is added.
 
-**You are here:** Postgres + walking-slice API (leaderboard, run detail, approve/reject). Web is not started.
+**You are here:** Postgres + walking-slice API + crude web console (board, ranking toggle, run review, act-as).
 
 ## How to run
 
@@ -14,7 +14,7 @@ Prerequisites: Docker. Defaults match `.env.example` (`speedsalon` / `speedsalon
 docker compose up -d db
 ```
 
-Connect a SQL client to `localhost:5432` with those credentials. First start loads schema and fixture. Web is not wired yet.
+Connect a SQL client to `localhost:5432` with those credentials. First start loads schema and fixture. Compose does not yet start api/web.
 
 ```bash
 npm install
@@ -22,7 +22,7 @@ npm test
 npm run dev
 ```
 
-API: `http://localhost:3000` — `X-Moderator-Id` on POST. Explorer: [`http://localhost:3000/docs`](http://localhost:3000/docs). IDs: [`docs/fixture.md`](docs/fixture.md).
+Web: [`http://localhost:5173`](http://localhost:5173). API: [`http://localhost:3000`](http://localhost:3000) — explorer [`/docs`](http://localhost:3000/docs). Act-as uses seeded mods; IDs: [`docs/fixture.md`](docs/fixture.md). Request log: `apps/api/logs/api.log` (gitignored).
 
 Reset to empty schema, then load fixture data:
 
@@ -49,6 +49,7 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 - Two seeds: small **fixture** for tests; **bulk** on the order of hundreds of thousands of runs.
 - REST v1 is resource HTTP (verbs, statuses), not a hypermedia graph.
 - Persistence is **`pg` + SQL** (ranking and seed stay explicit). Prisma is wishlist, not this take-home.
+- API request log is local JSONL (`logs/api.log`). Durable shipping is wishlist.
 
 ## Unfinished / not started
 
@@ -56,12 +57,12 @@ Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftov
 
 - Phase 1 leftover: **bulk seed** (hundreds of thousands of runs)
 - Phase 2 leftover: ban/appeal mutations, CSV, set default category, remaining constitution tests
-- Phase 3: Walking-slice UI then remaining screens / Compose demo
+- Phase 3 leftover: search/filter, CSV, ban/appeal UI, Compose `web`/`api` services
 - Appeal evidence storage (intentionally deferred; see data model stub)
 
 ## What we would do next
 
-Next: remaining API (ban/CSV/default) or walking-slice UI — see [`docs/roadmap.md`](docs/roadmap.md).
+Next: remaining API (ban/CSV/default) and leftover UI, or Compose api/web — see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Maintaining this project
 

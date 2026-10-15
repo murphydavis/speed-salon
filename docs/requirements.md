@@ -20,6 +20,7 @@ Volunteer moderators review speedrun submissions so leaderboards show legitimate
 - The ranking mode is a **toggle on the current view**, not a separate product.
 - Moderators can **filter** the current view, **search by runner name**, and **export the current view as CSV** (same filters, same ranking mode, paginated export or full current result set — see decisions if implementation picks a cap).
 - Eligible for ranking: run `status = approved` **and** the runner’s current ban is **inactive**.
+- Assigned moderators of the game may toggle **pending** and **banned** runs onto the current board (same category, mixed in by time). Those rows have **no place**. Place numbers stay the eligible ranking only. Unassigned or anonymous clients cannot include them.
 
 ### Run details
 
@@ -70,8 +71,8 @@ Adding a reason is a product change: update this table, `packages/shared`, and t
 
 - Current moderator is identified by header **`X-Moderator-Id`**.
 - Mutations (approve, reject, ban, unban, set default category, decide appeal) require that moderator to be **assigned to the run’s game** (or the game being configured).
-- Unknown or missing header on mutations → **401**. Assigned but wrong game → **403**.
-- Reads may be allowed for any known moderator (browse any board). The UI should still hide actions the header cannot perform.
+- Unknown or missing header on mutations → **401**. Assigned but wrong game → **403**. The same fail-closed rule applies to reads that expose pending or banned rows on a board.
+- Public board reads (eligible ranking only) do not require the header. The UI still hides actions and extra rows the header cannot perform.
 - A small **“act as moderator”** control in the web app that sets the header is allowed. It is not an authentication system.
 
 ### Seed data

@@ -46,7 +46,7 @@ Compose service `db` is Postgres 16. Init files run only on an empty volume.
 
 ## HTTP (v1)
 
-Resource URLs, standard verbs, typed errors, pagination. Optional `next` link on lists. No HATEOAS graph in v1. `GET /docs` is a spec explorer for reviewers (Swagger UI + `docs/openapi.yaml`), not a product screen.
+Resource URLs, standard verbs, typed errors, pagination. Optional `next` link on lists. No HATEOAS graph in v1. `GET /docs` is a spec explorer for reviewers (Swagger UI + `docs/openapi.yaml`), not a product screen. Local web (Vite) proxies API paths in development. The API appends one JSON line per request to `LOG_FILE` (default `logs/api.log`).
 
 ## What is intentionally not here
 

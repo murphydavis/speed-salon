@@ -1,22 +1,34 @@
 import {
   RANKING_MODES,
+  RUN_STATUSES,
   type RankingMode,
+  type RunStatus,
 } from "@speed-salon/shared";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
-import { isAssigned } from "./db/moderators.js";
+import { findModerator, isAssigned, listModerators } from "./db/moderators.js";
 import { getGame, listGames, resolveBoardCategoryId } from "./db/games.js";
-import { listLeaderboard } from "./db/leaderboard.js";
+import { listBoardExtras, listLeaderboard } from "./db/leaderboard.js";
 import type { Pool } from "./db/pool.js";
-import { approveRun, getRun, rejectRun, runGameId } from "./db/runs.js";
+import { approveRun, getRun, listGameRuns, rejectRun, runGameId } from "./db/runs.js";
 import { ApiError } from "./errors.js";
-import { parseLimit, parsePage } from "./http.js";
+import { parseFlag, parseLimit, parsePage } from "./http.js";
 import { requireModerator } from "./middleware/moderator.js";
+import { requestLog } from "./middleware/request-log.js";
 import { mountOpenApiDocs } from "./openapi-docs.js";
+import { MODERATOR_HEADER } from "@speed-salon/shared";
 
-export function createApp(pool: Pool): Express {
+export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express {
   const app = express();
+  if (opts.logFile) app.use(requestLog(opts.logFile));
   app.use(express.json());
   mountOpenApiDocs(app);
+
+  app.get("/moderators", asyncHandler(async (req, res) => {
+    const page = parsePage(req.query.page);
+    const limit = parseLimit(req.query.limit);
+    const { items, total } = await listModerators(pool, page, limit);
+    res.json({ page, limit, total, items, next: nextLink(req.path, page, limit, total, req.query) });
+  }));
 
   app.get("/games", asyncHandler(async (req, res) => {
     const page = parsePage(req.query.page);
@@ -29,6 +41,26 @@ export function createApp(pool: Pool): Express {
     res.json(await getGame(pool, req.params.gameId));
   }));
 
+  app.get("/games/:gameId/runs", asyncHandler(async (req, res) => {
+    const game = await getGame(pool, req.params.gameId);
+    const page = parsePage(req.query.page);
+    const limit = parseLimit(req.query.limit);
+    const status = parseStatus(req.query.status);
+    if (status !== "approved") {
+      await requireAssignedToGame(pool, req, game.id);
+    }
+    const { items, total } = await listGameRuns(pool, game.id, status, page, limit);
+    res.json({
+      gameId: game.id,
+      status,
+      page,
+      limit,
+      total,
+      items,
+      next: nextLink(req.path, page, limit, total, req.query),
+    });
+  }));
+
   app.get("/games/:gameId/leaderboard", asyncHandler(async (req, res) => {
     const page = parsePage(req.query.page);
     const limit = parseLimit(req.query.limit);
@@ -39,8 +71,51 @@ export function createApp(pool: Pool): Express {
       typeof req.query.categoryId === "string" ? req.query.categoryId : undefined,
     );
     const q = typeof req.query.q === "string" ? req.query.q : undefined;
+    const includePending = parseFlag(req.query.includePending);
+    const includeBanned = parseFlag(req.query.includeBanned);
+    if (includePending || includeBanned) {
+      await requireAssignedToGame(pool, req, req.params.gameId);
+    }
     const { items, total } = await listLeaderboard(pool, categoryId, mode, q, page, limit);
+    const extras =
+      includePending || includeBanned
+        ? await listBoardExtras(
+            pool,
+            categoryId,
+            mode,
+            q,
+            includePending,
+            includeBanned,
+            limit,
+          )
+        : [];
     const offset = (page - 1) * limit;
+    const ranked = items.map((row, i) => ({
+      place: offset + i + 1,
+      runId: row.id,
+      timeMs: row.timeMs,
+      submittedAt: row.submittedAt,
+      kind: row.kind,
+      runner: { id: row.runnerId, name: row.runnerName },
+    }));
+    const rankedIds = new Set(ranked.map((row) => row.runId));
+    const extraRows = extras
+      .filter((row) => !rankedIds.has(row.id))
+      .map((row) => ({
+        place: null as number | null,
+        runId: row.id,
+        timeMs: row.timeMs,
+        submittedAt: row.submittedAt,
+        kind: row.kind,
+        runner: { id: row.runnerId, name: row.runnerName },
+      }));
+    const merged = [...ranked, ...extraRows].sort((a, b) => {
+      if (a.timeMs !== b.timeMs) return a.timeMs - b.timeMs;
+      const at = new Date(a.submittedAt).getTime();
+      const bt = new Date(b.submittedAt).getTime();
+      if (at !== bt) return at - bt;
+      return a.runId.localeCompare(b.runId);
+    });
     res.json({
       gameId: req.params.gameId,
       categoryId,
@@ -48,13 +123,9 @@ export function createApp(pool: Pool): Express {
       page,
       limit,
       total,
-      items: items.map((row, i) => ({
-        place: offset + i + 1,
-        runId: row.id,
-        timeMs: row.timeMs,
-        submittedAt: row.submittedAt,
-        runner: { id: row.runnerId, name: row.runnerName },
-      })),
+      includePending,
+      includeBanned,
+      items: merged,
       next: nextLink(req.path, page, limit, total, req.query),
     });
   }));
@@ -95,6 +166,20 @@ export function createApp(pool: Pool): Express {
   return app;
 }
 
+async function requireAssignedToGame(pool: Pool, req: Request, gameId: string): Promise<void> {
+  const id = req.get(MODERATOR_HEADER)?.trim();
+  if (!id) {
+    throw new ApiError(401, "unauthorized", `${MODERATOR_HEADER} is required`);
+  }
+  const mod = await findModerator(pool, id);
+  if (!mod) {
+    throw new ApiError(401, "unauthorized", "unknown moderator");
+  }
+  if (!(await isAssigned(pool, mod.id, gameId))) {
+    throw new ApiError(403, "forbidden", "moderator is not assigned to this game");
+  }
+}
+
 async function mutateRun(
   pool: Pool,
   req: Request,
@@ -120,6 +205,13 @@ async function mutateRun(
   } finally {
     client.release();
   }
+}
+
+function parseStatus(raw: unknown): RunStatus {
+  if (typeof raw === "string" && (RUN_STATUSES as readonly string[]).includes(raw)) {
+    return raw as RunStatus;
+  }
+  throw new ApiError(400, "invalid_query", "status must be pending, approved, or rejected");
 }
 
 function parseMode(raw: unknown): RankingMode {

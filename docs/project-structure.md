@@ -6,8 +6,9 @@ Single repository. Display name **Speed Salon**; directory `speed-salon`.
 speed-salon/
   AGENTS.md                 # how humans and agents must work
   README.md                 # run, decisions summary, unfinished, next
-  docker-compose.yml        # Postgres; api/web later
+  docker-compose.yml        # Postgres; api/web services later
   package.json              # npm workspaces
+  scripts/dev.mjs           # runs API + Vite together
   db/
     migrations/             # versioned SQL (001_schema.sql)
     seed/                   # 001_fixture.sql
@@ -23,7 +24,7 @@ speed-salon/
     project-structure.md    # this file
   apps/
     api/                    # Express + TypeScript
-    web/                    # React + TypeScript (future)
+    web/                    # Vite + React + TypeScript
   packages/
     shared/                 # unions, header name
   .cursor/rules/            # short pointers at AGENTS.md
@@ -41,9 +42,7 @@ speed-salon/
 - A second database
 - A custom monorepo orchestrator if `docker compose` plus two package.json scripts suffice
 
-## First implementation files (when code starts)
-
-These are the intended entry points, not created yet:
+## First implementation files
 
 - `docker-compose.yml` — `db` now; `api`, `web` later
 - `db/migrations/001_schema.sql` — Postgres schema
@@ -52,7 +51,7 @@ These are the intended entry points, not created yet:
 - `apps/api/src/index.ts` — HTTP server
 - `apps/api/src/middleware/moderator.ts` — header identity
 - `docs/api.md` / `docs/openapi.yaml` — HTTP shapes
-- `apps/web/src/App.tsx` (or router root) — game page + ranking toggle
+- `apps/web/src/App.tsx` — game page + ranking toggle + act-as
 - `packages/shared/src/index.ts` — `RunStatus`, `RejectReason`, `RankingMode`, `AppealState`, `MODERATOR_HEADER`
 
 Build order is [`docs/roadmap.md`](roadmap.md). Best first **code** after docs: schema + **fixture** seed (phase 1); bulk seed can follow without blocking the walking slice.

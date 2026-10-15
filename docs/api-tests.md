@@ -15,6 +15,10 @@ Walking slice (in the test file):
 - [x] Reject with empty comment → 400
 - [x] Reject already-rejected run → 409
 - [x] Alice can approve SM64 pending; review event appended
+- [x] Moderators list includes assignments
+- [x] Game pending queue includes PendingPatty
+- [x] includePending without header → 401; wrong-game mod → 403
+- [x] Assigned mod can mix pending/banned; places stay eligible-only
 
 Not yet:
 
