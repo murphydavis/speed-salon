@@ -85,6 +85,7 @@ A crude UI for the walking slice is allowed as soon as the matching API tests ar
 - [x] Games list: name search and total / approved / pending / banned run counts (2026-10-15)
 - [x] Hide approved runs on a board (moderator work view; medals stay on the eligible ladder) (2026-10-15)
 - [x] Compose includes `api` and `web` so `docker compose up` is the full local demo (2026-10-15)
+- [x] Web smoke: Playwright walking-slice script and a committed demo video under 25 MB (2026-10-15)
 
 ---
 

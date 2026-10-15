@@ -16,6 +16,14 @@ docker compose up
 
 Web: [`http://localhost:5173`](http://localhost:5173). API: [`http://localhost:3000`](http://localhost:3000) — explorer [`/docs`](http://localhost:3000/docs). Act-as uses seeded mods; IDs: [`docs/fixture.md`](docs/fixture.md). `npm test` uses the same database (no seed-mode flag); it is slower on bulk and prints API coverage.
 
+Recorded walking-slice click-through (under 25 MB): [`docs/assets/smoke.webm`](docs/assets/smoke.webm), with a WebVTT step track at [`docs/assets/smoke.vtt`](docs/assets/smoke.vtt). The picture includes an overlay cursor, on-screen step captions, and the data grid after each action. Same path as an automated smoke (needs the app up, then Chromium once via `npx playwright install chromium` in `apps/web`):
+
+```bash
+npm run smoke
+```
+
+Re-record the file: `npm run smoke:video`. The script is read-only (no approve / reject / ban).
+
 Host Node (optional, against Compose `db`):
 
 ```bash
@@ -54,6 +62,7 @@ Full record: [`docs/decisions.md`](docs/decisions.md).
 - Two seeds: small **fixture** (IDs for tests) and **bulk** (default on first empty Compose volume).
 - REST v1 is resource HTTP (verbs, statuses), not a hypermedia graph.
 - Persistence is **`pg` + SQL** (ranking and seed stay explicit). Prisma is wishlist, not this take-home.
+- Playwright is a **web-only** smoke driver (not a Compose runtime dep). Demo capture: [`docs/assets/smoke.webm`](docs/assets/smoke.webm).
 - API request log is local JSONL (`logs/api.log`). Durable shipping is wishlist.
 - CSV export is capped at 10 000 runs unless `ignoreMaxRows` is set (best-effort; may fail). Job-based export and object storage are wishlist.
 
@@ -63,6 +72,7 @@ Tracked with checkboxes in [`docs/roadmap.md`](docs/roadmap.md). Headline leftov
 
 - Search on the board is runner-name only (no extra filter chips beyond approved/pending/banned toggles)
 - Compose bakes source into the image; rebuild after code changes (`docker compose up --build`)
+- Playwright Chromium is a host-only smoke browser; Compose does not install it
 - Rejected runs are not mixed onto the board (wishlist: training/review of past rejects)
 - Appeal evidence storage (intentionally deferred; see data model stub)
 - Wishlist (not this assignment): sortable columns; CI/CD with protected `main` (review + tests + coverage); notifications; mid-term discussion board, rejected-run review, secret store; long-term stats, split-host deploy, profiles/dashboard/assignment matrix, export jobs, VOD storage, paired runner app — see [`docs/roadmap.md`](docs/roadmap.md) Later / unscheduled

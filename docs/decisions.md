@@ -160,4 +160,12 @@ The API suite is `node --test` via `tsx`. `--experimental-test-coverage` plus `-
 
 Games list and board fetch `page` (default 1) and `limit` already returned by the API. The UI adds first / previous / next / last and a numeric seek. Filter changes drop `page` so the view returns to 1. No extra endpoints.
 
+## 2026-10-15 — Client parse and UUID faults stay HTTP, not process death
+
+Malformed JSON, unknown routes, illegal query values, and Postgres `22P02` (bad UUID text) map to structured `{ status, code, message }` (`400` / `404`). Unknown faults stay `500` `internal` without a stack in the body. The handler does not crash the process; the next request is still served.
+
+## 2026-10-15 — Playwright for a web smoke path and demo video
+
+Node’s test runner cannot drive the React console. `@playwright/test` is a **devDependency of `apps/web` only** so one script can click the walking slice (games → board → rank toggle → category → runner search → run detail → pending extras) and optionally record WebM. Headless Chromium has no OS pointer, so the recorder draws an overlay cursor, scrolls the data grid into view, and writes step captions both on-screen and as [`docs/assets/smoke.vtt`](assets/smoke.vtt). It is not a product dependency, not bundled in the Compose runtime (browser download skipped in the Docker `npm ci`), and not a CI gate. Stdlib `fetch` already covers the API constitution suite.
+
 ## Open (resolve when implementing)

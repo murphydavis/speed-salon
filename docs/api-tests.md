@@ -33,3 +33,11 @@ Walking slice (in the test file):
 - [x] Set default category (assigned only)
 - [x] Ban removes runner from the board; lift restores
 - [x] Approved appeal returns the runner to the board
+
+Crash probes (bad input must not take down the process; next valid request still 200):
+
+- [x] Malformed JSON body → 400 `invalid_json`
+- [x] Non-UUID path param → 400 `invalid_id`
+- [x] Unknown route → 404 JSON `not_found`
+- [x] Illegal `limit` / ranking `mode` → 400 `invalid_query`
+- [x] SQL-looking game search is parameterized (200, tables remain)

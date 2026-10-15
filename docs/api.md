@@ -2,7 +2,7 @@
 
 Canonical shapes: [`openapi.yaml`](openapi.yaml). Live explorer: `GET /docs` (serves that file). Domain rules stay in [`requirements.md`](requirements.md).
 
-Error body: `{ "status": number, "code": string, "message": string }`. Mutations require `X-Moderator-Id`. Eligible board GETs do not. `includePending` / `includeBanned` / `includeApproved=false` and non-approved `GET /games/{gameId}/runs` require an assigned moderator.
+Error body: `{ "status": number, "code": string, "message": string }`. Mutations require `X-Moderator-Id`. Eligible board GETs do not. `includePending` / `includeBanned` / `includeApproved=false` and non-approved `GET /games/{gameId}/runs` require an assigned moderator. Unknown paths are `404` `not_found`. Malformed JSON is `400` `invalid_json`. A path that is not a UUID is `400` `invalid_id`. Uncaught faults are `500` `internal` (no stack in the body). The process keeps serving after any of these.
 
 | Method | Path | Notes |
 |--------|------|--------|

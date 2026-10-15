@@ -12,8 +12,8 @@ speed-salon/
   scripts/dev.mjs           # runs API + Vite together
   db/
     migrations/             # versioned SQL (001_schema.sql)
-    seed/                   # 001_fixture.sql, 002_bulk.sql (optional, not init)
-    scripts/                # init.sh (empty volume), reset/seed/bulk/demo (tools profile)
+    seed/                   # 001_fixture.sql, 002_bulk.sql
+    scripts/                # init.sh (empty volume: schema + fixture + bulk), reset/seed/bulk/demo (tools profile)
     queries/                # intended ranking SQL for the API
   docs/
     requirements.md
@@ -22,10 +22,12 @@ speed-salon/
     decisions.md
     roadmap.md
     fixture.md
+    assets/smoke.webm       # recorded walking-slice click-through
+    assets/smoke.vtt        # step captions for that video
     project-structure.md    # this file
   apps/
     api/                    # Express + TypeScript
-    web/                    # Vite + React + TypeScript
+    web/                    # Vite + React + TypeScript; e2e/ walking-slice smoke
   packages/
     shared/                 # unions, header name
   .cursor/rules/            # short pointers at AGENTS.md

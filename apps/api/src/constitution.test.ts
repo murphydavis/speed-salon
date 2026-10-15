@@ -453,8 +453,68 @@ describe("moderation", () => {
   });
 });
 
+describe("crash probes leave the process serving", () => {
+  test("malformed JSON is 400 and the next list still works", async () => {
+    const res = await fetch(`${base}/runs/${PENDING_SM64}/approval`, {
+      method: "POST",
+      headers: { [MODERATOR_HEADER]: ALICE, "content-type": "application/json" },
+      body: "{not-json",
+    });
+    await assertStructuredError(res, 400, "invalid_json");
+    await assertStillServes();
+  });
+
+  test("non-UUID path is 400 and a real game still loads", async () => {
+    const res = await fetch(`${base}/games/not-a-uuid`);
+    await assertStructuredError(res, 400, "invalid_id");
+    const game = await json(`/games/${SM64}`);
+    assert.equal(game.id, SM64);
+  });
+
+  test("unknown route is JSON 404 and lists still work", async () => {
+    const res = await fetch(`${base}/definitely-not-a-route`);
+    await assertStructuredError(res, 404, "not_found");
+    await assertStillServes();
+  });
+
+  test("illegal query values are 400 and the board still loads", async () => {
+    const limit = await fetch(`${base}/games?limit=9999`);
+    await assertStructuredError(limit, 400, "invalid_query");
+    const mode = await fetch(`${base}/games/${SM64}/leaderboard?mode=explode`);
+    await assertStructuredError(mode, 400, "invalid_query");
+    const board = await json(`/games/${SM64}/leaderboard?limit=5`);
+    assert.ok(Array.isArray(board.items));
+  });
+
+  test("SQL-looking search does not crash and the next request still works", async () => {
+    const q = encodeURIComponent("'; DROP TABLE games;--");
+    const res = await fetch(`${base}/games?q=${q}`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.ok(Array.isArray(body.items));
+    await assertStillServes();
+  });
+});
+
 async function json(path: string, headers?: Record<string, string>) {
   const res = await fetch(`${base}${path}`, { headers });
   assert.equal(res.status, 200);
   return res.json();
+}
+
+async function assertStructuredError(res: Response, status: number, code: string) {
+  assert.equal(res.status, status);
+  const body = await res.json();
+  assert.equal(body.status, status);
+  assert.equal(body.code, code);
+  assert.equal(typeof body.message, "string");
+  assert.ok(body.message.length > 0);
+}
+
+async function assertStillServes() {
+  const res = await fetch(`${base}/games?limit=1`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.ok(Array.isArray(body.items));
+  assert.ok(body.items.length >= 1);
 }

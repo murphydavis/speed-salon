@@ -10,3 +10,5 @@ apps/api/logs
 !.env.example
 .cursor
 **/.vite
+**/test-results
+**/playwright-report

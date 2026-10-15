@@ -10,7 +10,9 @@
     "dev": "node scripts/dev.mjs",
     "dev:api": "npm run dev -w @speed-salon/api",
     "dev:web": "npm run dev -w @speed-salon/web",
-    "test": "npm run test -w @speed-salon/api"
+    "test": "npm run test -w @speed-salon/api",
+    "smoke": "npm run smoke -w @speed-salon/web",
+    "smoke:video": "npm run smoke:video -w @speed-salon/web"
   },
   "engines": {
     "node": ">=22"

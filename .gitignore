@@ -149,6 +149,12 @@ vite.config.ts.timestamp-*
 # Turbo Repo
 .turbo
 
+# Playwright (recorded demo lives at docs/assets/smoke.webm)
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
 # Speed Salon
 postgres-data/
 .idea/

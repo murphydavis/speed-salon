@@ -12,7 +12,7 @@ import { findModerator, isAssigned, listModerators } from "./db/moderators.js";
 import { getGame, listGames, resolveBoardCategoryId, setDefaultCategory } from "./db/games.js";
 import type { Pool } from "./db/pool.js";
 import { approveRun, getRun, listGameRuns, rejectRun, runGameId } from "./db/runs.js";
-import { ApiError } from "./errors.js";
+import { ApiError, toClientError } from "./errors.js";
 import { CSV_MAX_ROWS, parseFlag, parseIncludeApproved, parseLimit, parsePage } from "./http.js";
 import { requireModerator } from "./middleware/moderator.js";
 import { requestLog } from "./middleware/request-log.js";
@@ -163,17 +163,14 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
     res.status(200).json(await getRun(pool, req.params.runId));
   }));
 
+  app.use((_req: Request, res: Response) => {
+    res.status(404).json({ status: 404, code: "not_found", message: "not found" });
+  });
+
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-    if (err instanceof ApiError) {
-      res.status(err.status).json(err.toJSON());
-      return;
-    }
-    console.error(err);
-    res.status(500).json({
-      status: 500,
-      code: "internal",
-      message: "internal error",
-    });
+    const mapped = toClientError(err);
+    if (mapped.status >= 500) console.error(err);
+    res.status(mapped.status).json(mapped.toJSON());
   });
 
   return app;
