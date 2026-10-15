@@ -33,7 +33,7 @@ There is no session. The header *is* the identity. Seeded moderator UUIDs are in
 
 ## CSV
 
-CSV is generated **on the API** from the same query parameters as the HTML table (game, category, ranking mode, search, filters). The browser should not re-implement ranking in JS for export. Default response is capped at 10 000 rows. `ignoreMaxRows=true` attempts the full set in one response. Async jobs and object-store files are wishlist.
+CSV is generated **on the API** from the same query parameters as the HTML table (game, category, ranking mode, search, filters). The browser should not re-implement ranking in JS for export. Default response is capped at 10 000 rows. `ignoreMaxRows=true` attempts the full set in one response. The download name is `{slug}-leaderboard-{UTC datetime}[-pending][-banned].csv` so the file records when that snapshot was current and which include flags were on. Columns `include_pending` / `include_banned` repeat those flags. Async jobs and object-store files are wishlist.
 
 ## Seed
 

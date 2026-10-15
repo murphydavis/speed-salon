@@ -1,4 +1,4 @@
-import { RANKING_MODES, type RankingMode } from "@speed-salon/shared";
+import { RANKING_MODES, csvExportFilename, type RankingMode } from "@speed-salon/shared";
 import { useEffect, useMemo, useState } from "react";
 import { api, apiDownload, ApiRequestError } from "../api.js";
 import { formatSubmitted, formatTime } from "../format.js";
@@ -222,7 +222,10 @@ export function GamePage({
             if (ignoreMaxRows) qs.set("ignoreMaxRows", "true");
             apiDownload(
               `/games/${gameId}/leaderboard.csv?${qs.toString()}`,
-              `${game.slug}-leaderboard.csv`,
+              csvExportFilename(game.slug, new Date(), {
+                includePending,
+                includeBanned,
+              }),
               { moderatorId: includePending || includeBanned ? moderatorId : undefined },
             ).catch((err: unknown) =>
               setActionError(err instanceof ApiRequestError ? err.message : String(err)),
@@ -248,22 +251,20 @@ export function GamePage({
 
       {assigned ? (
         <div className="row-btns">
-          <label>
-            <input
-              type="checkbox"
-              checked={includePending}
-              onChange={(e) => setQuery({ includePending: e.target.checked })}
-            />{" "}
-            Show pending
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={includeBanned}
-              onChange={(e) => setQuery({ includeBanned: e.target.checked })}
-            />{" "}
-            Show banned
-          </label>
+          <button
+            type="button"
+            className={includePending ? "active" : ""}
+            onClick={() => setQuery({ includePending: !includePending })}
+          >
+            {includePending ? "Hide pending" : "Show pending"}
+          </button>
+          <button
+            type="button"
+            className={includeBanned ? "active" : ""}
+            onClick={() => setQuery({ includeBanned: !includeBanned })}
+          >
+            {includeBanned ? "Hide banned" : "Show banned"}
+          </button>
         </div>
       ) : (
         <p className="muted">Act as an assigned moderator to show pending or banned runs on this board.</p>
@@ -318,17 +319,18 @@ export function GamePage({
 }
 
 function rankMark(mode: RankingMode, row: { isPb: boolean; playerPlace: number | null }) {
-  const podium = row.playerPlace === 1 || row.playerPlace === 2 || row.playerPlace === 3;
+  const playerPlace = row.playerPlace == null ? null : Number(row.playerPlace);
+  const podium = playerPlace === 1 || playerPlace === 2 || playerPlace === 3;
   const showMedal = podium && (mode === "players" || row.isPb);
   const medal = showMedal
-    ? row.playerPlace === 1
+    ? playerPlace === 1
       ? "🥇"
-      : row.playerPlace === 2
+      : playerPlace === 2
         ? "🥈"
         : "🥉"
     : null;
   const label =
-    row.playerPlace === 1 ? "1st" : row.playerPlace === 2 ? "2nd" : row.playerPlace === 3 ? "3rd" : null;
+    playerPlace === 1 ? "1st" : playerPlace === 2 ? "2nd" : playerPlace === 3 ? "3rd" : null;
   return (
     <>
       {medal && label ? (

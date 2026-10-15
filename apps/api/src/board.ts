@@ -31,24 +31,26 @@ export async function assembleBoard(
     includeBanned: boolean;
   },
 ): Promise<{ items: BoardItem[]; total: number }> {
-  const [{ items, total }, playerPlaces, runPlaces] = await Promise.all([
-    listLeaderboard(pool, opts.categoryId, opts.mode, opts.q, opts.page, opts.limit),
-    listPlayerPlaces(pool, opts.categoryId, opts.q),
+  const extrasOn = opts.includePending || opts.includeBanned;
+  const rankedPage = extrasOn ? 1 : opts.page;
+  const rankedLimit = extrasOn ? null : opts.limit;
+  const [{ items, total: rankedTotal }, playerPlaces, runPlaces] = await Promise.all([
+    listLeaderboard(pool, opts.categoryId, opts.mode, opts.q, rankedPage, rankedLimit),
+    listPlayerPlaces(pool, opts.categoryId),
     listPodiumRunPlaces(pool, opts.categoryId),
   ]);
-  const extras =
-    opts.includePending || opts.includeBanned
-      ? await listBoardExtras(
-          pool,
-          opts.categoryId,
-          opts.mode,
-          opts.q,
-          opts.includePending,
-          opts.includeBanned,
-          opts.limit,
-        )
-      : [];
-  const offset = opts.limit === null ? 0 : (opts.page - 1) * opts.limit;
+  const extras = extrasOn
+    ? await listBoardExtras(
+        pool,
+        opts.categoryId,
+        opts.mode,
+        opts.q,
+        opts.includePending,
+        opts.includeBanned,
+        null,
+      )
+    : [];
+  const offset = extrasOn || opts.limit === null ? 0 : (opts.page - 1) * opts.limit;
   const ranked: BoardItem[] = items.map((row, i) => ({
     place: offset + i + 1,
     runId: row.id,
@@ -81,10 +83,17 @@ export async function assembleBoard(
     if (at !== bt) return at - bt;
     return a.runId.localeCompare(b.runId);
   });
-  return { items: merged, total };
+  if (!extrasOn) return { items: merged, total: rankedTotal };
+  const total = merged.length;
+  if (opts.limit === null) return { items: merged, total };
+  const start = (opts.page - 1) * opts.limit;
+  return { items: merged.slice(start, start + opts.limit), total };
 }
 
-export function toCsv(items: BoardItem[]): string {
+export function toCsv(
+  items: BoardItem[],
+  flags: { includePending: boolean; includeBanned: boolean },
+): string {
   const header = [
     "place",
     "runner",
@@ -95,6 +104,8 @@ export function toCsv(items: BoardItem[]): string {
     "player_place",
     "run_place",
     "run_id",
+    "include_pending",
+    "include_banned",
   ];
   const lines = [header.join(",")];
   for (const row of items) {
@@ -113,6 +124,8 @@ export function toCsv(items: BoardItem[]): string {
         row.playerPlace ?? "",
         row.runPlace ?? "",
         row.runId,
+        flags.includePending ? "true" : "false",
+        flags.includeBanned ? "true" : "false",
       ].join(","),
     );
   }

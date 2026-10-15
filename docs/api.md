@@ -12,8 +12,8 @@ Error body: `{ "status": number, "code": string, "message": string }`. Mutations
 | GET | `/games` | Paginated. Query: `page`, `limit`. |
 | GET | `/games/{gameId}` | Categories; resolved default board. |
 | GET | `/games/{gameId}/runs` | Query: `status` (required: `pending` \| `approved` \| `rejected`), `page`, `limit`. Non-approved lists need assignment. |
-| GET | `/games/{gameId}/leaderboard` | Query: `categoryId`, `mode`, `q`, `page`, `limit`, `includePending`, `includeBanned`. Rows include `submittedAt`, `isPb`, `playerPlace` (player-ladder rank; medals 1–3 on the PB), `runPlace` (1–3 on the fastest eligible *runs*, not the emoji). Extras have `place: null`. Empty `q` is the full board. |
-| GET | `/games/{gameId}/leaderboard.csv` | Same query as the board. Omit `q` (or leave it empty) for the entire board. Default cap 10 000. `ignoreMaxRows=true` attempts no cap (may fail). |
+| GET | `/games/{gameId}/leaderboard` | Query: `categoryId`, `mode`, `q`, `page`, `limit`, `includePending`, `includeBanned`. Rows include `submittedAt`, `isPb`, `playerPlace` (unfiltered player-ladder rank; medals 1–3 on the PB), `runPlace`. Extras have `place: null`. When include flags are set, `total` counts extras too and pagination slices the merged list. Empty `q` is the full board. |
+| GET | `/games/{gameId}/leaderboard.csv` | Same query as the board. Omit `q` (or leave it empty) for the entire board. Default cap 10 000. `ignoreMaxRows=true` attempts no cap (may fail). Filename `{slug}-leaderboard-{UTC}[-pending][-banned].csv`. Columns include `include_pending`, `include_banned`. |
 | POST | `/games/{gameId}/default-category` | Body `{ "categoryId" }`. Assigned only. |
 | POST | `/games/{gameId}/bans` | Body `{ "runnerId", "comment" }`. Site-wide ban. |
 | POST | `/games/{gameId}/bans/{banId}/lift` | Inactivate without delete (`unban` event). |

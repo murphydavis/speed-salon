@@ -1,6 +1,7 @@
 import {
   RANKING_MODES,
   RUN_STATUSES,
+  csvExportFilename,
   type RankingMode,
   type RunStatus,
 } from "@speed-salon/shared";
@@ -64,13 +65,18 @@ export function createApp(pool: Pool, opts: { logFile?: string } = {}): Express 
 
   app.get("/games/:gameId/leaderboard.csv", asyncHandler(async (req, res) => {
     const ignoreMaxRows = parseFlag(req.query.ignoreMaxRows);
+    const game = await getGame(pool, req.params.gameId);
     const board = await loadBoard(pool, req, ignoreMaxRows ? null : CSV_MAX_ROWS, 1);
     res.setHeader("content-type", "text/csv; charset=utf-8");
+    const flags = {
+      includePending: board.includePending,
+      includeBanned: board.includeBanned,
+    };
     res.setHeader(
       "content-disposition",
-      `attachment; filename="${req.params.gameId}-leaderboard.csv"`,
+      `attachment; filename="${csvExportFilename(game.slug, new Date(), flags)}"`,
     );
-    res.send(toCsv(board.items));
+    res.send(toCsv(board.items, flags));
   }));
 
   app.get("/games/:gameId/leaderboard", asyncHandler(async (req, res) => {

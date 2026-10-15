@@ -103,10 +103,12 @@ describe("leaderboard", () => {
   });
 
   test("Alice can mix pending and banned without changing places", async () => {
+    const eligible = await json(`/games/${SM64}/leaderboard?limit=50`);
     const body = await json(
       `/games/${SM64}/leaderboard?limit=50&includePending=true&includeBanned=true`,
       { [MODERATOR_HEADER]: ALICE },
     );
+    assert.ok(body.total > eligible.total);
     const dash = body.items.find((row: { runner: { name: string } }) => row.runner.name === "DashMain");
     assert.equal(dash.place, 1);
     const pending = body.items.find((row: { runId: string }) => row.runId === PENDING_SM64);
@@ -149,6 +151,15 @@ describe("leaderboard", () => {
     assert.ok(body.items.length >= 1);
     assert.ok(body.items.every((row: { runner: { name: string } }) => row.runner.name.includes("DashMain")));
   });
+
+  test("search does not re-rank Olympic medals", async () => {
+    const body = await json(`/games/${SM64}/leaderboard?q=BannedAppealWon`);
+    const row = body.items.find(
+      (item: { runner: { name: string }; isPb: boolean }) =>
+        item.runner.name === "BannedAppealWon" && item.isPb,
+    );
+    assert.equal(row.playerPlace, 2);
+  });
 });
 
 describe("csv and default category", () => {
@@ -160,6 +171,26 @@ describe("csv and default category", () => {
     assert.match(text, /DashMain/);
     assert.match(text, /SecondPlace/);
     assert.doesNotMatch(text, /PendingPatty/);
+    assert.match(
+      res.headers.get("content-disposition") ?? "",
+      /filename="sm64-leaderboard-\d{4}-\d{2}-\d{2}T\d{6}Z\.csv"/,
+    );
+    assert.match(text, /include_pending,include_banned/);
+  });
+
+  test("csv include flags appear in filename and columns", async () => {
+    const res = await fetch(
+      `${base}/games/${SM64}/leaderboard.csv?mode=players&includePending=true&includeBanned=true`,
+      { headers: { [MODERATOR_HEADER]: ALICE } },
+    );
+    assert.equal(res.status, 200);
+    assert.match(
+      res.headers.get("content-disposition") ?? "",
+      /filename="sm64-leaderboard-\d{4}-\d{2}-\d{2}T\d{6}Z-pending-banned\.csv"/,
+    );
+    const text = await res.text();
+    assert.match(text, /PendingPatty/);
+    assert.match(text, /,true,true\r?\n/);
   });
 
   test("csv empty q is the full board", async () => {

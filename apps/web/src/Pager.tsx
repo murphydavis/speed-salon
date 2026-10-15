@@ -50,7 +50,7 @@ export function Pager({
         <button type="submit">Go</button>
       </form>
       <span className="muted">
-        of {last} ({total})
+        of {last} · {total} rows
       </span>
       <button type="button" disabled={page >= last} onClick={() => go(page + 1)}>
         Next

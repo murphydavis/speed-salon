@@ -112,7 +112,11 @@ Durable shipping (CloudWatch, OpenSearch, a log vendor) waits on hosting choices
 
 ## 2026-10-15 — Board extras are query flags, not a schema change
 
-`includePending` / `includeBanned` on the leaderboard reuse existing `runs` + `bans`. Ranked `total` / `place` / pagination stay eligible-only. Extra rows are capped at `limit` and mixed into the current page by time. Assigned-moderator header required when either flag is true.
+`includePending` / `includeBanned` on the leaderboard reuse existing `runs` + `bans`. Ranked `place` stays eligible-only. Extra rows are mixed in by time.
+
+## 2026-10-15 — Include flags join pagination total
+
+Supersedes extras-only-on-the-current-page. When either include flag is true, `total` is eligible + extras, and `page`/`limit` slice that merged list. Place numbers are still eligible rank. CSV records the flags in the filename (`-pending`, `-banned`) and in `include_pending` / `include_banned` columns. Assigned-moderator header required when either flag is true.
 
 ## 2026-10-15 — Board `submitted_at` stands in for completed-at
 
@@ -120,7 +124,7 @@ Runs have no separate completed timestamp. The board shows `submitted_at` in tha
 
 ## 2026-10-15 — CSV is the full matching board, capped at 10 000 rows
 
-Export uses the same category, mode, search, and include flags as the HTML table, not only the current page. Ranked rows are included first (eligible order), then extras if requested, truncated at 10 000. Enough for the fixture and a fair demo; bulk-scale export would need a job.
+Export uses the same category, mode, search, and include flags as the HTML table, not only the current page. Rows are merged by time (extras mixed in when requested), truncated at 10 000. Enough for the fixture and a fair demo; bulk-scale export would need a job.
 
 ## 2026-10-15 — Optional `ignoreMaxRows` attempts an uncapped CSV
 
@@ -132,7 +136,7 @@ Supersedes treating gold/silver/bronze as player-ladder marks on PBs. The podium
 
 ## 2026-10-15 — Medals follow player PBs (Olympic)
 
-Supersedes “three fastest eligible runs” for the emoji. Gold / silver / bronze are 1st / 2nd / 3rd on the **player** board, shown on that runner’s PB row in both ranking modes. One person cannot take gold, silver, and bronze with three throws. `runPlace` may still name the three fastest *runs* in the API/CSV; the UI medals use `playerPlace` and `isPb`.
+Supersedes “three fastest eligible runs” for the emoji. Gold / silver / bronze are 1st / 2nd / 3rd on the **player** board, shown on that runner’s PB row in both ranking modes. One person cannot take gold, silver, and bronze with three throws. `playerPlace` is computed on the **unfiltered** eligible board so search does not promote 2nd to gold. `runPlace` may still name the three fastest *runs* in the API/CSV; the UI medals use `playerPlace` and `isPb`.
 
 ## 2026-10-15 — UI pager uses the existing `page` query
 

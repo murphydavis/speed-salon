@@ -83,9 +83,7 @@ export async function listLeaderboard(
 export async function listPlayerPlaces(
   pool: Pool,
   categoryId: string,
-  q: string | undefined,
 ): Promise<Map<string, number>> {
-  const search = q?.trim() ? q.trim() : null;
   const result = await pool.query<{ runnerId: string; playerPlace: string }>(
     `SELECT "runnerId",
             row_number() OVER (
@@ -98,11 +96,10 @@ export async function listPlayerPlaces(
          r.submitted_at AS "submittedAt",
          r.runner_id AS "runnerId"
        FROM runs r
-       JOIN runners rn ON rn.id = r.runner_id
-       WHERE r.category_id = $1 AND ${ELIGIBLE} AND ${RUNNER_FILTER}
+       WHERE r.category_id = $1 AND ${ELIGIBLE}
        ORDER BY r.runner_id, r.time_ms ASC, r.submitted_at ASC, r.id ASC
      ) best`,
-    [categoryId, search],
+    [categoryId],
   );
   const places = new Map<string, number>();
   for (const row of result.rows) {

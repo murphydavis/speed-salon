@@ -19,10 +19,13 @@ Walking slice (in the test file):
 - [x] Moderators list includes assignments
 - [x] Game pending queue includes PendingPatty
 - [x] includePending without header → 401; wrong-game mod → 403
-- [x] Assigned mod can mix pending/banned; places stay eligible-only
+- [x] Assigned mod can mix pending/banned; places stay eligible-only; total includes extras
 
 - [x] Search q=DashMain returns that runner
+- [x] Search does not re-rank Olympic playerPlace (BannedAppealWon stays 2)
 - [x] CSV with no `q` exports the full board (DashMain and SecondPlace)
+- [x] CSV `Content-Disposition` filename includes a UTC datetime stamp
+- [x] CSV include flags appear in filename (`-pending`/`-banned`) and columns
 - [x] Player podium: DashMain PB is gold (`playerPlace` 1); non-PB DashMain times are not silver/bronze; SecondPlace PB is bronze
 - [x] CSV `ignoreMaxRows=true` is accepted and still returns CSV
 - [x] Set default category (assigned only)

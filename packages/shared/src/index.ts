@@ -25,3 +25,14 @@ export const APPEAL_STATES = [
   "approved",
 ] as const;
 export type AppealState = (typeof APPEAL_STATES)[number];
+
+/** UTC stamp in the filename so the export’s “as of” time is visible. No colons (Windows). */
+export function csvExportFilename(
+  slug: string,
+  at: Date = new Date(),
+  flags: { includePending?: boolean; includeBanned?: boolean } = {},
+): string {
+  const stamp = `${at.toISOString().slice(0, 19).replaceAll(":", "")}Z`;
+  const extras = `${flags.includePending ? "-pending" : ""}${flags.includeBanned ? "-banned" : ""}`;
+  return `${slug}-leaderboard-${stamp}${extras}.csv`;
+}
